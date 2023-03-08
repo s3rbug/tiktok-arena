@@ -36,9 +36,8 @@ func RegisterUser(c *fiber.Ctx) error {
 	}
 
 	newUser := models.User{
-		Name:        payload.Name,
-		Password:    string(hashedPassword),
-		Tournaments: []models.Tournament{},
+		Name:     payload.Name,
+		Password: string(hashedPassword),
 	}
 
 	err = database.CreateNewUser(&newUser)

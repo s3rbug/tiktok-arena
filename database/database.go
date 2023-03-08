@@ -45,7 +45,8 @@ func FindUserByName(username string) (models.User, error) {
 }
 
 func CheckIfUserExists(username string) bool {
-	user, _ := FindUserByName(username)
+	var user models.User
+	DB.Table("users").Select("id").First(&user, "name = ?", username)
 	return user.ID != nil
 }
 
@@ -61,7 +62,8 @@ func FindTournamentByName(tournamentName string) (models.Tournament, error) {
 }
 
 func CheckIfTournamentExists(tournamentName string) bool {
-	tournament, _ := FindTournamentByName(tournamentName)
+	var tournament models.Tournament
+	DB.Table("tournaments").Select("id").First(&tournament, "name = ?", tournamentName)
 	return tournament.ID != nil
 }
 

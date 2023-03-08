@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"log"
+	"strconv"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
 )
@@ -22,7 +22,7 @@ func WhoAmI(c *fiber.Ctx) error {
 func CreateTournament(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	log.Print(claims["sub"])
+
 	userId, err := uuid.Parse(claims["sub"].(string))
 
 	if err != nil {
@@ -42,6 +42,12 @@ func CreateTournament(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
 	}
 
+	if !models.CheckIfAllowedTournamentSize(payload.Size) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": strconv.Itoa(payload.Size) + " is incorrect tournament size",
+		})
+	}
+
 	if database.CheckIfTournamentExists(payload.Name) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Tournament " + payload.Name + " already exists"})
 	}
@@ -51,7 +57,16 @@ func CreateTournament(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
 	}
 
-	var tiktokReferences []models.TiktokReference
+	newTournament := models.Tournament{
+		ID:     &newTournamentId,
+		Name:   payload.Name,
+		UserID: &userId,
+		Size:   payload.Size,
+	}
+	err = database.CreateNewTournament(&newTournament)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
+	}
 
 	for _, value := range payload.Tiktoks {
 		tiktok := models.Tiktok{
@@ -64,18 +79,6 @@ func CreateTournament(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
 		}
-		tiktokReferences = append(tiktokReferences, models.TiktokReference{ID: tiktok.ID})
-	}
-
-	newTournament := models.Tournament{
-		ID:      &newTournamentId,
-		Name:    payload.Name,
-		UserID:  &userId,
-		Tiktoks: tiktokReferences,
-	}
-	err = database.CreateNewTournament(&newTournament)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

@@ -14,7 +14,3 @@ type Tiktok struct {
 type CreateTiktok struct {
 	URL string
 }
-
-type TiktokReference struct {
-	ID *uuid.UUID `gorm:"type:uuid"`
-}
