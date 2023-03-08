@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"log"
 	"tiktok-arena/configuration"
+	"tiktok-arena/database"
 	"tiktok-arena/router"
 )
 
@@ -13,7 +14,7 @@ func init() {
 	if err != nil {
 		log.Fatalln("Failed to load environment variables! \n", err.Error())
 	}
-	configuration.ConnectDB(&configuration.EnvConfig)
+	database.ConnectDB(&configuration.EnvConfig)
 }
 
 func main() {

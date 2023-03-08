@@ -14,4 +14,8 @@ func SetupRoutes(app *fiber.App) {
 		router.Post("/login", controllers.LoginUser)
 		router.Get("/whoami", middleware.Protected(), controllers.WhoAmI)
 	})
+
+	api.Route("/tournament", func(router fiber.Router) {
+		router.Post("", middleware.Protected(), controllers.CreateTournament)
+	})
 }
