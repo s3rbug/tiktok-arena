@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"tiktok-arena/configuration"
 	"tiktok-arena/database"
@@ -12,6 +13,15 @@ import (
 	"time"
 )
 
+//	@Summary		Register user
+//	@Description	Register new user with given credentials
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload			body		models.RegisterInput	true	"Data to register user"
+//	@Success		200				{object}	models.UserInfo			"Register success"
+//	@Failure		400				{object}	models.FiberMessage		"Failed to register user"
+//	@Router			/auth/register	[post]
 func RegisterUser(c *fiber.Ctx) error {
 	var payload *models.RegisterInput
 
@@ -55,13 +65,22 @@ func RegisterUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(
-		fiber.Map{
-			"username": newUser.Name,
-			"token":    token,
+		models.AuthDetails{
+			Username: newUser.Name,
+			Token:    token,
 		},
 	)
 }
 
+//	@Summary		Login user
+//	@Description	Login user with given credentials
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload			body		models.LoginInput	true	"Data to login user"
+//	@Success		200				{object}	models.UserInfo		"Login success"
+//	@Failure		400				{object}	models.FiberMessage	"Error logging in"
+//	@Router			/auth/login    	[post]
 func LoginUser(c *fiber.Ctx) error {
 	var payload *models.LoginInput
 
@@ -92,7 +111,12 @@ func LoginUser(c *fiber.Ctx) error {
 			fmt.Sprintf("Generating JWT Token failed: %v", err))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
+	return c.Status(fiber.StatusOK).JSON(
+		models.AuthDetails{
+			Username: user.Name,
+			Token:    token,
+		},
+	)
 }
 
 func UserJwtToken(user *models.User) (string, error) {
@@ -113,4 +137,29 @@ func UserJwtToken(user *models.User) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+//	@Summary		Authenticated user details
+//	@Description	Get current user id and name
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Success		200	{object}	models.UserInfo		"User details"
+//	@Failure		400	{object}	models.FiberMessage	"Error getting user data"
+//	@Router			/auth/whoami [get]
+func WhoAmI(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	username := claims["name"].(string)
+	id, err := uuid.Parse(claims["sub"].(string))
+
+	if err != nil {
+		return utils.FiberMessage(c, fiber.StatusBadRequest, "Error while parsing user id")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.UserInfo{
+		ID:   &id,
+		Name: username,
+	})
 }

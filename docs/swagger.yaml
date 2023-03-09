@@ -1,0 +1,256 @@
+basePath: /api
+definitions:
+  models.CreateTiktok:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  models.CreateTournament:
+    properties:
+      name:
+        type: string
+      size:
+        type: integer
+      tiktoks:
+        items:
+          $ref: '#/definitions/models.CreateTiktok'
+        type: array
+    required:
+    - name
+    - size
+    - tiktoks
+    type: object
+  models.FiberMessage:
+    properties:
+      message:
+        type: string
+    type: object
+  models.LoginInput:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - name
+    - password
+    type: object
+  models.RegisterInput:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - name
+    - password
+    type: object
+  models.Tiktok:
+    properties:
+      avgPoints:
+        type: number
+      id:
+        type: string
+      tournament:
+        $ref: '#/definitions/models.Tournament'
+      tournamentID:
+        type: string
+      url:
+        type: string
+      wins:
+        type: integer
+    type: object
+  models.Tournament:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      size:
+        type: integer
+      user:
+        $ref: '#/definitions/models.User'
+      userID:
+        type: string
+    type: object
+  models.User:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  models.UserInfo:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API for TikTok arena application
+  title: TikTok arena API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user with given credentials
+      parameters:
+      - description: Data to login user
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login success
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Error logging in
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      summary: Login user
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register new user with given credentials
+      parameters:
+      - description: Data to register user
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Register success
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Failed to register user
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      summary: Register user
+      tags:
+      - auth
+  /auth/whoami:
+    get:
+      consumes:
+      - application/json
+      description: Get current user id and name
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Error getting user data
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Authenticated user details
+      tags:
+      - auth
+  /tournament:
+    post:
+      consumes:
+      - application/json
+      description: Create new tournament for current user
+      parameters:
+      - description: Data to create tournament
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTournament'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tournament created
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+        "400":
+          description: Error during tournament creation
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Create new tournament
+      tags:
+      - tournament
+  /tournament/{tournamentId}:
+    get:
+      consumes:
+      - application/json
+      description: Get tournament details by its id
+      parameters:
+      - description: Tournament id
+        in: path
+        name: tournamentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tournament
+          schema:
+            $ref: '#/definitions/models.Tournament'
+        "400":
+          description: Tournament not found
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      summary: Tournament details
+      tags:
+      - tournament
+  /tournament/{tournamentId}/tiktoks:
+    get:
+      consumes:
+      - application/json
+      description: Get tournament tiktoks
+      parameters:
+      - description: Tournament id
+        in: path
+        name: tournamentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tournament tiktoks
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/models.Tiktok'
+              type: array
+            type: array
+        "400":
+          description: Tournament not found
+          schema:
+            $ref: '#/definitions/models.FiberMessage'
+      summary: Tournament tiktoks
+      tags:
+      - tournament
+swagger: "2.0"

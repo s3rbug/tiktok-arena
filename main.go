@@ -17,6 +17,11 @@ func init() {
 	database.ConnectDB(&configuration.EnvConfig)
 }
 
+//	@title			TikTok arena API
+//	@version		1.0
+//	@description	API for TikTok arena application
+//	@host			localhost:8000
+//	@BasePath		/api
 func main() {
 	app := fiber.New()
 	//	Logger middleware for logging HTTP request/response details

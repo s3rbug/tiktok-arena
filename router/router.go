@@ -2,12 +2,17 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 	"tiktok-arena/controllers"
+	_ "tiktok-arena/docs"
 	"tiktok-arena/middleware"
 )
 
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
+
+	//	Use 'swag init' to generate new /docs files, details: https://github.com/gofiber/swagger#usage
+	api.Get("/docs/*", swagger.HandlerDefault)
 
 	api.Route("/auth", func(router fiber.Router) {
 		router.Post("/register", controllers.RegisterUser)
