@@ -38,7 +38,7 @@ func ConnectDB(config *configuration.EnvConfigModel) {
 	log.Println("Successfully connected to the database")
 }
 
-func FindUserByName(username string) (models.User, error) {
+func GetUserByName(username string) (models.User, error) {
 	var user models.User
 	record := DB.Table("users").First(&user, "name = ?", username)
 	return user, record.Error
@@ -55,9 +55,15 @@ func CreateNewUser(newUser *models.User) error {
 	return record.Error
 }
 
-func FindTournamentByName(tournamentName string) (models.Tournament, error) {
+func GetTournamentByName(tournamentName string) (models.Tournament, error) {
 	var tournament models.Tournament
 	record := DB.Table("tournaments").First(&tournament, "name = ?", tournamentName)
+	return tournament, record.Error
+}
+
+func GetTournamentById(tournamentId string) (models.Tournament, error) {
+	var tournament models.Tournament
+	record := DB.Table("tournaments").First(&tournament, "id = ?", tournamentId)
 	return tournament, record.Error
 }
 
@@ -75,4 +81,10 @@ func CreateNewTournament(newTournament *models.Tournament) error {
 func CreateNewTiktok(newTiktok *models.Tiktok) error {
 	record := DB.Table("tiktoks").Create(&newTiktok)
 	return record.Error
+}
+
+func GetTournamentTiktoksById(tournamentId string) ([]models.Tiktok, error) {
+	var tiktoks []models.Tiktok
+	record := DB.Table("tiktoks").Find(&tiktoks, "tournament_id = ?", tournamentId)
+	return tiktoks, record.Error
 }

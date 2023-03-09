@@ -12,5 +12,5 @@ type Tiktok struct {
 }
 
 type CreateTiktok struct {
-	URL string
+	URL string `validate:"required"`
 }

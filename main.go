@@ -12,7 +12,7 @@ import (
 func init() {
 	err := configuration.LoadConfig(".env")
 	if err != nil {
-		log.Fatalln("Failed to load environment variables! \n", err.Error())
+		log.Fatalln("Failed to load environment variables!", err.Error())
 	}
 	database.ConnectDB(&configuration.EnvConfig)
 }

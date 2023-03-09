@@ -13,9 +13,9 @@ type Tournament struct {
 }
 
 type CreateTournament struct {
-	Name    string
-	Size    int
-	Tiktoks []CreateTiktok
+	Name    string         `validate:"required"`
+	Size    int            `validate:"required"`
+	Tiktoks []CreateTiktok `validate:"required"`
 }
 
 func GetAllowedTournamentSize() map[int]bool {

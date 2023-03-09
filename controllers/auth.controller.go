@@ -8,6 +8,7 @@ import (
 	"tiktok-arena/configuration"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
+	"tiktok-arena/utils"
 	"time"
 )
 
@@ -16,23 +17,23 @@ func RegisterUser(c *fiber.Ctx) error {
 
 	err := c.BodyParser(&payload)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error()})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	//	TODO: useless?
 	err = models.ValidateStruct(payload)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": err.Error()})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error()})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	if database.CheckIfUserExists(payload.Name) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "User " + payload.Name + " already exists"})
+		return utils.FiberMessage(c, fiber.StatusBadRequest,
+			fmt.Sprintf("User %s already exists", payload.Name))
 	}
 
 	newUser := models.User{
@@ -43,14 +44,20 @@ func RegisterUser(c *fiber.Ctx) error {
 	err = database.CreateNewUser(&newUser)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"message": "Something bad happened"})
+		return utils.FiberMessage(c, fiber.StatusBadGateway, err.Error())
+	}
+
+	token, err := UserJwtToken(&newUser)
+
+	if err != nil {
+		return utils.FiberMessage(c, fiber.StatusBadGateway,
+			fmt.Sprintf("Generating JWT Token failed: %v", err))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(
 		fiber.Map{
-			"data": fiber.Map{
-				"user": newUser,
-			},
+			"username": newUser.Name,
+			"token":    token,
 		},
 	)
 }
@@ -60,23 +67,35 @@ func LoginUser(c *fiber.Ctx) error {
 
 	err := c.BodyParser(&payload)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error()})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	err = models.ValidateStruct(payload)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(err.Error())
+		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
 	}
-	user, err := database.FindUserByName(payload.Name)
+
+	user, err := database.GetUserByName(payload.Name)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid credentials"})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, "Invalid credentials")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid credentials"})
+		return utils.FiberMessage(c, fiber.StatusBadRequest, "Invalid credentials")
 	}
 
+	token, err := UserJwtToken(&user)
+
+	if err != nil {
+		return utils.FiberMessage(c, fiber.StatusBadGateway,
+			fmt.Sprintf("Generating JWT Token failed: %v", err))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
+}
+
+func UserJwtToken(user *models.User) (string, error) {
 	now := time.Now().UTC()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -90,10 +109,8 @@ func LoginUser(c *fiber.Ctx) error {
 	tokenString, err := token.SignedString([]byte(configuration.EnvConfig.JwtSecret))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
-			"message": fmt.Sprintf("generating JWT Token failed: %v", err),
-		})
+		return "", err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": tokenString})
+	return tokenString, nil
 }
