@@ -19,3 +19,13 @@ type LoginInput struct {
 	Name     string `validate:"required"`
 	Password string `validate:"required"`
 }
+
+type UserInfo struct {
+	ID   *uuid.UUID
+	Name string
+}
+
+type UserAuthDetails struct {
+	Username string
+	Token    string
+}

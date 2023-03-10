@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
-	"tiktok-arena/utils"
 )
 
 //	@Summary		Create new tournament
@@ -17,8 +16,8 @@ import (
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Param			payload	body		models.CreateTournament	true	"Data to create tournament"
-//	@Success		200		{object}	models.FiberMessage		"Tournament created"
-//	@Failure		400		{object}	models.FiberMessage		"Error during tournament creation"
+//	@Success		200		{object}	MessageResponseType		"Tournament created"
+//	@Failure		400		{object}	MessageResponseType		"Error during tournament creation"
 //	@Router			/tournament [post]
 func CreateTournament(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
@@ -27,28 +26,28 @@ func CreateTournament(c *fiber.Ctx) error {
 	userId, err := uuid.Parse(claims["sub"].(string))
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	var payload *models.CreateTournament
 
 	err = c.BodyParser(&payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	err = models.ValidateStruct(payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	if !models.CheckIfAllowedTournamentSize(payload.Size) {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("%d is incorrect tournament size", payload.Size))
 	}
 
 	if payload.Size != len(payload.Tiktoks) {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Tournament size and count of tiktoks mismatch (%d != %d)",
 				payload.Size,
 				len(payload.Tiktoks)),
@@ -56,13 +55,13 @@ func CreateTournament(c *fiber.Ctx) error {
 	}
 
 	if database.CheckIfTournamentExists(payload.Name) {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Tournament %s already exists", payload.Name))
 	}
 
 	newTournamentId, err := uuid.NewRandom()
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	newTournament := models.Tournament{
@@ -73,7 +72,7 @@ func CreateTournament(c *fiber.Ctx) error {
 	}
 	err = database.CreateNewTournament(&newTournament)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	for _, value := range payload.Tiktoks {
@@ -85,11 +84,11 @@ func CreateTournament(c *fiber.Ctx) error {
 		}
 		err = database.CreateNewTiktok(&tiktok)
 		if err != nil {
-			return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+			return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 		}
 	}
 
-	return utils.FiberMessage(c, fiber.StatusOK,
+	return MessageResponse(c, fiber.StatusOK,
 		fmt.Sprintf("Successfully created tournament %s", payload.Name))
 }
 
@@ -100,17 +99,17 @@ func CreateTournament(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			tournamentId	path		string				true	"Tournament id"
 //	@Success		200				{object}	models.Tournament	"Tournament"
-//	@Failure		400				{object}	models.FiberMessage	"Tournament not found"
+//	@Failure		400				{object}	MessageResponseType	"Tournament not found"
 //	@Router			/tournament/{tournamentId} [get]
 func GetTournamentDetails(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
 	}
 	tournament, err := database.GetTournamentById(tournamentId)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Could not get tournament with id %s", tournamentId))
 	}
 	return c.Status(fiber.StatusOK).JSON(tournament)
@@ -122,18 +121,18 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			tournamentId	path		string				true	"Tournament id"
-//	@Success		200				{array}		[]models.Tiktok		"Tournament tiktoks"
-//	@Failure		400				{object}	models.FiberMessage	"Tournament not found"
+//	@Success		200				{array}		models.Tiktok		"Tournament tiktoks"
+//	@Failure		400				{object}	MessageResponseType	"Tournament not found"
 //	@Router			/tournament/{tournamentId}/tiktoks [get]
 func GetTournamentTiktoks(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
 	}
 	tiktoks, err := database.GetTournamentTiktoksById(tournamentId)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Could not get tiktoks for tournament with id %s", tournamentId))
 	}
 	return c.Status(fiber.StatusOK).JSON(tiktoks)

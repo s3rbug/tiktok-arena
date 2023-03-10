@@ -1,5 +1,10 @@
 basePath: /api
 definitions:
+  controllers.MessageResponseType:
+    properties:
+      message:
+        type: string
+    type: object
   models.CreateTiktok:
     properties:
       url:
@@ -21,11 +26,6 @@ definitions:
     - name
     - size
     - tiktoks
-    type: object
-  models.FiberMessage:
-    properties:
-      message:
-        type: string
     type: object
   models.LoginInput:
     properties:
@@ -84,6 +84,13 @@ definitions:
       password:
         type: string
     type: object
+  models.UserAuthDetails:
+    properties:
+      token:
+        type: string
+      username:
+        type: string
+    type: object
   models.UserInfo:
     properties:
       id:
@@ -116,11 +123,11 @@ paths:
         "200":
           description: Login success
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/models.UserAuthDetails'
         "400":
           description: Error logging in
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       summary: Login user
       tags:
       - auth
@@ -142,11 +149,11 @@ paths:
         "200":
           description: Register success
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/models.UserAuthDetails'
         "400":
           description: Failed to register user
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       summary: Register user
       tags:
       - auth
@@ -165,7 +172,7 @@ paths:
         "400":
           description: Error getting user data
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       security:
       - ApiKeyAuth: []
       summary: Authenticated user details
@@ -189,11 +196,11 @@ paths:
         "200":
           description: Tournament created
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
         "400":
           description: Error during tournament creation
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       security:
       - ApiKeyAuth: []
       summary: Create new tournament
@@ -220,7 +227,7 @@ paths:
         "400":
           description: Tournament not found
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       summary: Tournament details
       tags:
       - tournament
@@ -242,14 +249,12 @@ paths:
           description: Tournament tiktoks
           schema:
             items:
-              items:
-                $ref: '#/definitions/models.Tiktok'
-              type: array
+              $ref: '#/definitions/models.Tiktok'
             type: array
         "400":
           description: Tournament not found
           schema:
-            $ref: '#/definitions/models.FiberMessage'
+            $ref: '#/definitions/controllers.MessageResponseType'
       summary: Tournament tiktoks
       tags:
       - tournament

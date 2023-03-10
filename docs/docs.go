@@ -43,13 +43,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Login success",
                         "schema": {
-                            "$ref": "#/definitions/models.UserInfo"
+                            "$ref": "#/definitions/models.UserAuthDetails"
                         }
                     },
                     "400": {
                         "description": "Error logging in",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -83,13 +83,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Register success",
                         "schema": {
-                            "$ref": "#/definitions/models.UserInfo"
+                            "$ref": "#/definitions/models.UserAuthDetails"
                         }
                     },
                     "400": {
                         "description": "Failed to register user",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -123,7 +123,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Error getting user data",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -162,13 +162,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Tournament created",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     },
                     "400": {
                         "description": "Error during tournament creation",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -206,7 +206,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Tournament not found",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -240,17 +240,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/models.Tiktok"
-                                }
+                                "$ref": "#/definitions/models.Tiktok"
                             }
                         }
                     },
                     "400": {
                         "description": "Tournament not found",
                         "schema": {
-                            "$ref": "#/definitions/models.FiberMessage"
+                            "$ref": "#/definitions/controllers.MessageResponseType"
                         }
                     }
                 }
@@ -258,6 +255,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.MessageResponseType": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "models.CreateTiktok": {
             "type": "object",
             "required": [
@@ -288,14 +293,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.CreateTiktok"
                     }
-                }
-            }
-        },
-        "models.FiberMessage": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
                 }
             }
         },
@@ -382,6 +379,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserAuthDetails": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

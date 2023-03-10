@@ -9,7 +9,6 @@ import (
 	"tiktok-arena/configuration"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
-	"tiktok-arena/utils"
 	"time"
 )
 
@@ -19,30 +18,30 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload			body		models.RegisterInput	true	"Data to register user"
-//	@Success		200				{object}	models.UserInfo			"Register success"
-//	@Failure		400				{object}	models.FiberMessage		"Failed to register user"
+//	@Success		200				{object}	models.UserAuthDetails	"Register success"
+//	@Failure		400				{object}	MessageResponseType		"Failed to register user"
 //	@Router			/auth/register	[post]
 func RegisterUser(c *fiber.Ctx) error {
 	var payload *models.RegisterInput
 
 	err := c.BodyParser(&payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	err = models.ValidateStruct(payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	if database.CheckIfUserExists(payload.Name) {
-		return utils.FiberMessage(c, fiber.StatusBadRequest,
+		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("User %s already exists", payload.Name))
 	}
 
@@ -54,18 +53,18 @@ func RegisterUser(c *fiber.Ctx) error {
 	err = database.CreateNewUser(&newUser)
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadGateway, err.Error())
+		return MessageResponse(c, fiber.StatusBadGateway, err.Error())
 	}
 
 	token, err := UserJwtToken(&newUser)
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadGateway,
+		return MessageResponse(c, fiber.StatusBadGateway,
 			fmt.Sprintf("Generating JWT Token failed: %v", err))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(
-		models.AuthDetails{
+		models.UserAuthDetails{
 			Username: newUser.Name,
 			Token:    token,
 		},
@@ -77,42 +76,42 @@ func RegisterUser(c *fiber.Ctx) error {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload			body		models.LoginInput	true	"Data to login user"
-//	@Success		200				{object}	models.UserInfo		"Login success"
-//	@Failure		400				{object}	models.FiberMessage	"Error logging in"
+//	@Param			payload			body		models.LoginInput		true	"Data to login user"
+//	@Success		200				{object}	models.UserAuthDetails	"Login success"
+//	@Failure		400				{object}	MessageResponseType		"Error logging in"
 //	@Router			/auth/login    	[post]
 func LoginUser(c *fiber.Ctx) error {
 	var payload *models.LoginInput
 
 	err := c.BodyParser(&payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	err = models.ValidateStruct(payload)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, err.Error())
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	user, err := database.GetUserByName(payload.Name)
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, "Invalid credentials")
+		return MessageResponse(c, fiber.StatusBadRequest, "Invalid credentials")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, "Invalid credentials")
+		return MessageResponse(c, fiber.StatusBadRequest, "Invalid credentials")
 	}
 
 	token, err := UserJwtToken(&user)
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadGateway,
+		return MessageResponse(c, fiber.StatusBadGateway,
 			fmt.Sprintf("Generating JWT Token failed: %v", err))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(
-		models.AuthDetails{
+		models.UserAuthDetails{
 			Username: user.Name,
 			Token:    token,
 		},
@@ -146,7 +145,7 @@ func UserJwtToken(user *models.User) (string, error) {
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Success		200	{object}	models.UserInfo		"User details"
-//	@Failure		400	{object}	models.FiberMessage	"Error getting user data"
+//	@Failure		400	{object}	MessageResponseType	"Error getting user data"
 //	@Router			/auth/whoami [get]
 func WhoAmI(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
@@ -155,7 +154,7 @@ func WhoAmI(c *fiber.Ctx) error {
 	id, err := uuid.Parse(claims["sub"].(string))
 
 	if err != nil {
-		return utils.FiberMessage(c, fiber.StatusBadRequest, "Error while parsing user id")
+		return MessageResponse(c, fiber.StatusBadRequest, "Error while parsing user id")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(models.UserInfo{
