@@ -5,6 +5,29 @@ definitions:
       message:
         type: string
     type: object
+  models.ContestItem:
+    properties:
+      firstOption:
+        $ref: '#/definitions/models.ContestOption'
+      id:
+        type: string
+      secondOption:
+        $ref: '#/definitions/models.ContestOption'
+    type: object
+  models.ContestOption:
+    properties:
+      optionID:
+        type: string
+      url:
+        type: string
+    type: object
+  models.ContestPayload:
+    properties:
+      contestType:
+        type: string
+    required:
+    - contestType
+    type: object
   models.CreateTiktok:
     properties:
       url:
@@ -229,6 +252,41 @@ paths:
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
       summary: Tournament details
+      tags:
+      - tournament
+  /tournament/{tournamentId}/contest:
+    get:
+      consumes:
+      - application/json
+      description: Get tournament contest
+      parameters:
+      - description: Tournament id
+        in: path
+        name: tournamentId
+        required: true
+        type: string
+      - description: Contest type
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.ContestPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contest items, each array represents round of contest
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/models.ContestItem'
+              type: array
+            type: array
+        "400":
+          description: Failed to return tournament contest
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+      summary: Tournament contest
       tags:
       - tournament
   /tournament/{tournamentId}/tiktoks:

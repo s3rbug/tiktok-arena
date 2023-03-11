@@ -212,6 +212,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/tournament/{tournamentId}/contest": {
+            "get": {
+                "description": "Get tournament contest",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Tournament contest",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tournament id",
+                        "name": "tournamentId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contest type",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ContestPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contest items, each array represents round of contest",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.ContestItem"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Failed to return tournament contest",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
         "/tournament/{tournamentId}/tiktoks": {
             "get": {
                 "description": "Get tournament tiktoks",
@@ -259,6 +312,42 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ContestItem": {
+            "type": "object",
+            "properties": {
+                "firstOption": {
+                    "$ref": "#/definitions/models.ContestOption"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "secondOption": {
+                    "$ref": "#/definitions/models.ContestOption"
+                }
+            }
+        },
+        "models.ContestOption": {
+            "type": "object",
+            "properties": {
+                "optionID": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ContestPayload": {
+            "type": "object",
+            "required": [
+                "contestType"
+            ],
+            "properties": {
+                "contestType": {
                     "type": "string"
                 }
             }

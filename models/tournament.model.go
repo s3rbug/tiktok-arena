@@ -8,8 +8,8 @@ type Tournament struct {
 	ID     *uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
 	Name   string     `gorm:"not null"`
 	Size   int        `gorm:"not null"`
-	UserID *uuid.UUID
-	User   User `gorm:"foreignKey:UserID"`
+	UserID *uuid.UUID `gorm:"not null"`
+	User   *User      `gorm:"foreignKey:UserID"`
 }
 
 type CreateTournament struct {
@@ -18,12 +18,36 @@ type CreateTournament struct {
 	Tiktoks []CreateTiktok `validate:"required"`
 }
 
+type ContestItem struct {
+	ID           string
+	FirstOption  ContestOption
+	SecondOption ContestOption
+}
+
+type ContestOption struct {
+	OptionID string
+	Url      string
+}
+
+type ContestPayload struct {
+	ContestType string `validate:"required"`
+}
+
+func GetAllowedTournamentType() map[string]bool {
+	return map[string]bool{
+		"single elimination": true,
+	}
+}
+
+func CheckIfAllowedTournamentType(tournamentType string) bool {
+	return GetAllowedTournamentType()[tournamentType]
+}
+
 func GetAllowedTournamentSize() map[int]bool {
 	return map[int]bool{
 		8:  true,
 		16: true,
 		32: true,
-		64: true,
 	}
 }
 

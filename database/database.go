@@ -85,6 +85,12 @@ func CreateNewTiktok(newTiktok *models.Tiktok) error {
 
 func GetTournamentTiktoksById(tournamentId string) ([]models.Tiktok, error) {
 	var tiktoks []models.Tiktok
-	record := DB.Table("tiktoks").Find(&tiktoks, "tournament_id = ?", tournamentId)
+	record := DB.Table("tiktoks").Select([]string{"ID", "TournamentID", "URL", "Wins", "AvgPoints"}).Find(&tiktoks, "tournament_id = ?", tournamentId)
 	return tiktoks, record.Error
+}
+
+func GetAllTournaments() ([]models.Tournament, error) {
+	var tournaments []models.Tournament
+	record := DB.Table("tournaments").Select("*").Limit(100).Find(&tournaments)
+	return tournaments, record.Error
 }

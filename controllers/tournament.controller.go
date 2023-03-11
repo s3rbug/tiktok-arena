@@ -137,3 +137,100 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(tiktoks)
 }
+
+//	@Summary		Tournament contest
+//	@Description	Get tournament contest
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Param			tournamentId	path		string					true	"Tournament id"
+//	@Param			payload			body		models.ContestPayload	true	"Contest type"
+//	@Success		200				{array}		[]models.ContestItem	"Contest items, each array represents round of contest"
+//	@Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
+//	@Router			/tournament/{tournamentId}/contest [get]
+func GetTournamentContest(c *fiber.Ctx) error {
+	tournamentId := c.Params("tournamentId")
+	if tournamentId == "" {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
+	}
+	var payload *models.ContestPayload
+
+	err := c.BodyParser(&payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = models.ValidateStruct(payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	if !models.CheckIfAllowedTournamentType(payload.ContestType) {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("%s is not allowed tournament format", payload.ContestType),
+		)
+	}
+	tiktoks, err := database.GetTournamentTiktoksById(tournamentId)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Could not get tiktoks for tournament with id %s", tournamentId))
+	}
+
+	if payload.ContestType == "single elimination" {
+		return c.Status(fiber.StatusOK).JSON(SingleElimination(tiktoks))
+	}
+	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")
+}
+
+func SingleElimination(tiktoks []models.Tiktok) [][]models.ContestItem {
+	length := len(tiktoks)
+	rounds := make([][]models.ContestItem, 0)
+	round := make([]models.ContestItem, 0)
+	for j := 0; j < length; j += 2 {
+		round = append(round, models.ContestItem{
+			ID: uuid.NewString(),
+			FirstOption: models.ContestOption{
+				OptionID: "",
+				Url:      tiktoks[j].URL,
+			},
+			SecondOption: models.ContestOption{
+				OptionID: "",
+				Url:      tiktoks[j+1].URL,
+			},
+		})
+	}
+	rounds = append(rounds, round)
+	roundIndex := 1
+	for i := length / 2; i > 1; i /= 2 {
+		round := make([]models.ContestItem, 0)
+		for j := 0; j < i/2; j++ {
+			prevRoundIndex := j * 2
+			prevRoundFirstOption := rounds[roundIndex-1][prevRoundIndex]
+			prevRoundSecondOption := rounds[roundIndex-1][prevRoundIndex+1]
+			round = append(round, models.ContestItem{
+				ID: uuid.NewString(),
+				FirstOption: models.ContestOption{
+					OptionID: prevRoundFirstOption.ID,
+					Url:      "",
+				},
+				SecondOption: models.ContestOption{
+					OptionID: prevRoundSecondOption.ID,
+					Url:      "",
+				},
+			})
+		}
+		rounds = append(rounds, round)
+		roundIndex++
+	}
+
+	return rounds
+}
+
+func GetAllTournaments(c *fiber.Ctx) error {
+	tournaments, err := database.GetAllTournaments()
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
+	}
+	return c.Status(fiber.StatusOK).JSON(tournaments)
+}
