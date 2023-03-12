@@ -18,6 +18,30 @@ type CreateTournament struct {
 	Tiktoks []CreateTiktok `validate:"required"`
 }
 
+type SingleEliminationBracket struct {
+	CountMatches int
+	Rounds       *[]Round
+}
+
+type Round struct {
+	Round   int
+	Matches []Match
+}
+
+type MatchOption struct {
+	MatchID string
+}
+
+type TiktokOption struct {
+	TiktokURL string
+}
+
+type Match struct {
+	MatchID      string
+	FirstOption  interface{}
+	SecondOption interface{}
+}
+
 type ContestItem struct {
 	ID           string
 	FirstOption  ContestOption
