@@ -187,6 +187,7 @@ func GetTournamentContest(c *fiber.Ctx) error {
 func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket {
 	countTiktok := len(tiktoks)
 	countRound := math.Ceil(math.Log2(float64(countTiktok)))
+	countSecondRoundParticipators := math.Pow(2, countRound) / 2
 	countFirstRoundTiktoks := (countTiktok - int(math.Pow(2, countRound-1))) * 2
 
 	var bracket models.SingleEliminationBracket
@@ -221,7 +222,7 @@ func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket 
 		secondRoundParticipators = append(secondRoundParticipators, models.TiktokOption{TiktokURL: tiktoks[countTiktok-1-i].URL})
 	}
 	// Generating second round firstRoundMatches
-	for i := 0; i < countTiktok-countFirstRoundTiktoks; i += 2 {
+	for i := 0; i < int(countSecondRoundParticipators); i += 2 {
 		match := models.Match{
 			MatchID:      uuid.NewString(),
 			FirstOption:  secondRoundParticipators[i],
