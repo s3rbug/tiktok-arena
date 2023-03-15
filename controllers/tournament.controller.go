@@ -12,16 +12,17 @@ import (
 	"time"
 )
 
-// CreateTournament @Summary		Create new tournament
-// @Description	Create new tournament for current user
-// @Tags			tournament
-// @Accept			json
-// @Produce		json
-// @Security		ApiKeyAuth
-// @Param			payload	body		models.CreateTournament	true	"Data to create tournament"
-// @Success		200		{object}	MessageResponseType		"Tournament created"
-// @Failure		400		{object}	MessageResponseType		"Error during tournament creation"
-// @Router			/tournament [post]
+//	@Summary		Create new tournament
+//	@Description	Create new tournament for current user
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			payload	body		models.CreateTournament	true	"Data to create tournament"
+//	@Success		200		{object}	MessageResponseType		"Tournament created"
+//	@Failure		400		{object}	MessageResponseType		"Error during tournament creation"
+//	@Router			/tournament [post]
+
 func CreateTournament(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -96,14 +97,15 @@ func CreateTournament(c *fiber.Ctx) error {
 }
 
 // GetTournamentDetails @Summary		Tournament details
-// @Description	Get tournament details by its id
-// @Tags			tournament
-// @Accept			json
-// @Produce		json
-// @Param			tournamentId	path		string				true	"Tournament id"
-// @Success		200				{object}	models.Tournament	"Tournament"
-// @Failure		400				{object}	MessageResponseType	"Tournament not found"
-// @Router			/tournament/{tournamentId} [get]
+//	@Description	Get tournament details by its id
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Param			tournamentId	path		string				true	"Tournament id"
+//	@Success		200				{object}	models.Tournament	"Tournament"
+//	@Failure		400				{object}	MessageResponseType	"Tournament not found"
+//	@Router			/tournament/{tournamentId} [get]
+
 func GetTournamentDetails(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -118,15 +120,16 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tournament)
 }
 
-// GetTournamentTiktoks @Summary		Tournament tiktoks
-// @Description	Get tournament tiktoks
-// @Tags			tournament
-// @Accept			json
-// @Produce		json
-// @Param			tournamentId	path		string				true	"Tournament id"
-// @Success		200				{array}		models.Tiktok		"Tournament tiktoks"
-// @Failure		400				{object}	MessageResponseType	"Tournament not found"
-// @Router			/tournament/{tournamentId}/tiktoks [get]
+//	@Summary		Tournament tiktoks
+//	@Description	Get tournament tiktoks
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Param			tournamentId	path		string				true	"Tournament id"
+//	@Success		200				{array}		models.Tiktok		"Tournament tiktoks"
+//	@Failure		400				{object}	MessageResponseType	"Tournament not found"
+//	@Router			/tournament/{tournamentId}/tiktoks [get]
+
 func GetTournamentTiktoks(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -141,37 +144,27 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tiktoks)
 }
 
-// GetTournamentContest @Summary		Tournament contest
-// @Description	Get tournament contest
-// @Tags			tournament
-// @Accept			json
-// @Produce		json
-// @Param			tournamentId	path		string					true	"Tournament id"
-// @Param			payload			body		models.ContestPayload	true	"Contest type"
-// @Success		200				{array}		[]models.ContestItem	"Contest items, each array represents round of contest"
-// @Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
-// @Router			/tournament/{tournamentId}/contest [get]
+//	@Summary		Tournament contest
+//	@Description	Get tournament contest
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Param			tournamentId	path		string					true	"Tournament id"
+//	@Param			payload			query		models.ContestPayload	true	"Contest type"
+//	@Success		200				{array}		[]models.ContestItem	"Contest items, each array represents round of contest"
+//	@Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
+//	@Router			/tournament/{tournamentId}/contest [get]
 func GetTournamentContest(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
 		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
 	}
-	var payload *models.ContestPayload
 
-	err := c.BodyParser(&payload)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	err = models.ValidateStruct(payload)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	if !models.CheckIfAllowedTournamentType(payload.ContestType) {
+	contestType := c.Query("type")
+	if !models.CheckIfAllowedTournamentType(contestType) {
 		return MessageResponse(c, fiber.StatusBadRequest,
-			fmt.Sprintf("%s is not allowed tournament format", payload.ContestType),
+			fmt.Sprintf("%s is not allowed tournament format", contestType),
 		)
 	}
 	tiktoks, err := database.GetTournamentTiktoksById(tournamentId)
@@ -180,16 +173,16 @@ func GetTournamentContest(c *fiber.Ctx) error {
 			fmt.Sprintf("Could not get tiktoks for tournament with id %s", tournamentId))
 	}
 
-	if payload.ContestType == "single elimination" {
+	if contestType == "single_elimination" {
 		return c.Status(fiber.StatusOK).JSON(SingleElimination(tiktoks))
 	}
-	if payload.ContestType == "double elimination" {
+	if contestType == "double elimination" {
 		return c.Status(fiber.StatusOK).JSON(DoubleElimination(tiktoks))
 	}
-	if payload.ContestType == "swiss system" {
+	if contestType == "swiss system" {
 		return c.Status(fiber.StatusOK).JSON(SwissSystem(tiktoks))
 	}
-	if payload.ContestType == "king of the hill" {
+	if contestType == "king of the hill" {
 		return c.Status(fiber.StatusOK).JSON(KingOfTheHill(tiktoks))
 	}
 	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")

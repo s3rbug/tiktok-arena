@@ -21,11 +21,12 @@ type LoginInput struct {
 }
 
 type UserInfo struct {
-	ID   *uuid.UUID
-	Name string
+	ID       *uuid.UUID
+	Username string
 }
 
 type UserAuthDetails struct {
+	ID       string
 	Username string
 	Token    string
 }

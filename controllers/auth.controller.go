@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"tiktok-arena/configuration"
@@ -65,6 +65,7 @@ func RegisterUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(
 		models.UserAuthDetails{
+			ID:       newUser.ID.String(),
 			Username: newUser.Name,
 			Token:    token,
 		},
@@ -112,6 +113,7 @@ func LoginUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(
 		models.UserAuthDetails{
+			ID:       user.ID.String(),
 			Username: user.Name,
 			Token:    token,
 		},
@@ -158,7 +160,7 @@ func WhoAmI(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(models.UserInfo{
-		ID:   &id,
-		Name: username,
+		ID:       &id,
+		Username: username,
 	})
 }
