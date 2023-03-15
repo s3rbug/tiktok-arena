@@ -42,25 +42,26 @@ type Match struct {
 	SecondOption interface{}
 }
 
-type ContestItem struct {
-	ID           string
-	FirstOption  ContestOption
-	SecondOption ContestOption
+func SingleElimination() string {
+	return "single_elimination"
 }
 
-type ContestOption struct {
-	OptionID string
-	Url      string
+func KingOfTheHill() string {
+	return "king_of_the_hill"
 }
 
-type ContestPayload struct {
-	ContestType string `validate:"required"`
+func SwissSystem() string {
+	return "swiss_system"
+}
+
+func DoubleElimination() string {
+	return "double_elimination"
 }
 
 func GetAllowedTournamentType() map[string]bool {
 	return map[string]bool{
-		"single elimination": true,
-		"king of the hill":   true,
+		SingleElimination(): true,
+		KingOfTheHill():     true,
 	}
 }
 

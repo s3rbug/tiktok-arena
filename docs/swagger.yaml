@@ -5,28 +5,14 @@ definitions:
       message:
         type: string
     type: object
-  models.ContestItem:
+  models.Bracket:
     properties:
-      firstOption:
-        $ref: '#/definitions/models.ContestOption'
-      id:
-        type: string
-      secondOption:
-        $ref: '#/definitions/models.ContestOption'
-    type: object
-  models.ContestOption:
-    properties:
-      optionID:
-        type: string
-      url:
-        type: string
-    type: object
-  models.ContestPayload:
-    properties:
-      contestType:
-        type: string
-    required:
-    - contestType
+      countMatches:
+        type: integer
+      rounds:
+        items:
+          $ref: '#/definitions/models.Round'
+        type: array
     type: object
   models.CreateTiktok:
     properties:
@@ -60,6 +46,13 @@ definitions:
     - name
     - password
     type: object
+  models.Match:
+    properties:
+      firstOption: {}
+      matchID:
+        type: string
+      secondOption: {}
+    type: object
   models.RegisterInput:
     properties:
       name:
@@ -70,12 +63,23 @@ definitions:
     - name
     - password
     type: object
+  models.Round:
+    properties:
+      matches:
+        items:
+          $ref: '#/definitions/models.Match'
+        type: array
+      round:
+        type: integer
+    type: object
   models.Tiktok:
     properties:
       avgPoints:
         type: number
       id:
         type: string
+      timesPlayed:
+        type: integer
       tournament:
         $ref: '#/definitions/models.Tournament'
       tournamentID:
@@ -109,16 +113,11 @@ definitions:
     type: object
   models.UserAuthDetails:
     properties:
+      id:
+        type: string
       token:
         type: string
       username:
-        type: string
-    type: object
-  models.UserInfo:
-    properties:
-      id:
-        type: string
-      name:
         type: string
     type: object
 host: localhost:8000
@@ -191,7 +190,7 @@ paths:
         "200":
           description: User details
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/models.UserAuthDetails'
         "400":
           description: Error getting user data
           schema:
@@ -202,6 +201,26 @@ paths:
       tags:
       - auth
   /tournament:
+    get:
+      consumes:
+      - application/json
+      description: Get all tournaments
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contest bracket
+          schema:
+            items:
+              $ref: '#/definitions/models.Tournament'
+            type: array
+        "400":
+          description: Failed to return tournament contest
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+      summary: All tournaments
+      tags:
+      - tournament
     post:
       consumes:
       - application/json
@@ -265,23 +284,17 @@ paths:
         name: tournamentId
         required: true
         type: string
-      - description: Contest type
-        in: body
-        name: payload
+      - in: query
+        name: contestType
         required: true
-        schema:
-          $ref: '#/definitions/models.ContestPayload'
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Contest items, each array represents round of contest
+          description: Contest bracket
           schema:
-            items:
-              items:
-                $ref: '#/definitions/models.ContestItem'
-              type: array
-            type: array
+            $ref: '#/definitions/models.Bracket'
         "400":
           description: Failed to return tournament contest
           schema:

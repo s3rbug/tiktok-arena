@@ -117,7 +117,7 @@ const docTemplate = `{
                     "200": {
                         "description": "User details",
                         "schema": {
-                            "$ref": "#/definitions/models.UserInfo"
+                            "$ref": "#/definitions/models.UserAuthDetails"
                         }
                     },
                     "400": {
@@ -130,6 +130,36 @@ const docTemplate = `{
             }
         },
         "/tournament": {
+            "get": {
+                "description": "Get all tournaments",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "All tournaments",
+                "responses": {
+                    "200": {
+                        "description": "Contest bracket",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Tournament"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Failed to return tournament contest",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -234,26 +264,17 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Contest type",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ContestPayload"
-                        }
+                        "type": "string",
+                        "name": "contestType",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Contest items, each array represents round of contest",
+                        "description": "Contest bracket",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/models.ContestItem"
-                                }
-                            }
+                            "$ref": "#/definitions/models.Bracket"
                         }
                     },
                     "400": {
@@ -316,39 +337,17 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ContestItem": {
+        "models.Bracket": {
             "type": "object",
             "properties": {
-                "firstOption": {
-                    "$ref": "#/definitions/models.ContestOption"
+                "countMatches": {
+                    "type": "integer"
                 },
-                "id": {
-                    "type": "string"
-                },
-                "secondOption": {
-                    "$ref": "#/definitions/models.ContestOption"
-                }
-            }
-        },
-        "models.ContestOption": {
-            "type": "object",
-            "properties": {
-                "optionID": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ContestPayload": {
-            "type": "object",
-            "required": [
-                "contestType"
-            ],
-            "properties": {
-                "contestType": {
-                    "type": "string"
+                "rounds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Round"
+                    }
                 }
             }
         },
@@ -400,6 +399,16 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Match": {
+            "type": "object",
+            "properties": {
+                "firstOption": {},
+                "matchID": {
+                    "type": "string"
+                },
+                "secondOption": {}
+            }
+        },
         "models.RegisterInput": {
             "type": "object",
             "required": [
@@ -415,6 +424,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Round": {
+            "type": "object",
+            "properties": {
+                "matches": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Match"
+                    }
+                },
+                "round": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.Tiktok": {
             "type": "object",
             "properties": {
@@ -423,6 +446,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "timesPlayed": {
+                    "type": "integer"
                 },
                 "tournament": {
                     "$ref": "#/definitions/models.Tournament"
@@ -475,21 +501,13 @@ const docTemplate = `{
         "models.UserAuthDetails": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "string"
+                },
                 "token": {
                     "type": "string"
                 },
                 "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserInfo": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 }
             }

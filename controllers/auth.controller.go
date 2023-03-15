@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"tiktok-arena/configuration"
 	"tiktok-arena/database"
@@ -12,6 +11,7 @@ import (
 	"time"
 )
 
+// RegisterUser
 //	@Summary		Register user
 //	@Description	Register new user with given credentials
 //	@Tags			auth
@@ -72,6 +72,7 @@ func RegisterUser(c *fiber.Ctx) error {
 	)
 }
 
+// LoginUser
 //	@Summary		Login user
 //	@Description	Login user with given credentials
 //	@Tags			auth
@@ -140,27 +141,26 @@ func UserJwtToken(user *models.User) (string, error) {
 	return tokenString, nil
 }
 
+// WhoAmI
 //	@Summary		Authenticated user details
 //	@Description	Get current user id and name
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200	{object}	models.UserInfo		"User details"
-//	@Failure		400	{object}	MessageResponseType	"Error getting user data"
+//	@Success		200	{object}	models.UserAuthDetails	"User details"
+//	@Failure		400	{object}	MessageResponseType		"Error getting user data"
 //	@Router			/auth/whoami [get]
 func WhoAmI(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+	token := c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+
 	username := claims["name"].(string)
-	id, err := uuid.Parse(claims["sub"].(string))
+	id := claims["sub"].(string)
 
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, "Error while parsing user id")
-	}
-
-	return c.Status(fiber.StatusOK).JSON(models.UserInfo{
-		ID:       &id,
+	return c.Status(fiber.StatusOK).JSON(models.UserAuthDetails{
+		ID:       id,
 		Username: username,
+		Token:    token.Raw,
 	})
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// CreateTournament
 //	@Summary		Create new tournament
 //	@Description	Create new tournament for current user
 //	@Tags			tournament
@@ -22,7 +23,6 @@ import (
 //	@Success		200		{object}	MessageResponseType		"Tournament created"
 //	@Failure		400		{object}	MessageResponseType		"Error during tournament creation"
 //	@Router			/tournament [post]
-
 func CreateTournament(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -96,7 +96,8 @@ func CreateTournament(c *fiber.Ctx) error {
 		fmt.Sprintf("Successfully created tournament %s", payload.Name))
 }
 
-// GetTournamentDetails @Summary		Tournament details
+// GetTournamentDetails
+//	@Summary		Tournament details
 //	@Description	Get tournament details by its id
 //	@Tags			tournament
 //	@Accept			json
@@ -105,7 +106,6 @@ func CreateTournament(c *fiber.Ctx) error {
 //	@Success		200				{object}	models.Tournament	"Tournament"
 //	@Failure		400				{object}	MessageResponseType	"Tournament not found"
 //	@Router			/tournament/{tournamentId} [get]
-
 func GetTournamentDetails(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -120,6 +120,7 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tournament)
 }
 
+// GetTournamentTiktoks
 //	@Summary		Tournament tiktoks
 //	@Description	Get tournament tiktoks
 //	@Tags			tournament
@@ -129,7 +130,6 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 //	@Success		200				{array}		models.Tiktok		"Tournament tiktoks"
 //	@Failure		400				{object}	MessageResponseType	"Tournament not found"
 //	@Router			/tournament/{tournamentId}/tiktoks [get]
-
 func GetTournamentTiktoks(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -144,6 +144,7 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tiktoks)
 }
 
+// GetTournamentContest
 //	@Summary		Tournament contest
 //	@Description	Get tournament contest
 //	@Tags			tournament
@@ -151,7 +152,7 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			tournamentId	path		string					true	"Tournament id"
 //	@Param			payload			query		models.ContestPayload	true	"Contest type"
-//	@Success		200				{array}		[]models.ContestItem	"Contest items, each array represents round of contest"
+//	@Success		200				{object}	models.Bracket			"Contest bracket"
 //	@Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
 //	@Router			/tournament/{tournamentId}/contest [get]
 func GetTournamentContest(c *fiber.Ctx) error {
@@ -173,16 +174,16 @@ func GetTournamentContest(c *fiber.Ctx) error {
 			fmt.Sprintf("Could not get tiktoks for tournament with id %s", tournamentId))
 	}
 
-	if contestType == "single_elimination" {
+	if contestType == models.SingleElimination() {
 		return c.Status(fiber.StatusOK).JSON(SingleElimination(tiktoks))
 	}
-	if contestType == "double elimination" {
+	if contestType == models.DoubleElimination() {
 		return c.Status(fiber.StatusOK).JSON(DoubleElimination(tiktoks))
 	}
-	if contestType == "swiss system" {
+	if contestType == models.SwissSystem() {
 		return c.Status(fiber.StatusOK).JSON(SwissSystem(tiktoks))
 	}
-	if contestType == "king of the hill" {
+	if contestType == models.KingOfTheHill() {
 		return c.Status(fiber.StatusOK).JSON(KingOfTheHill(tiktoks))
 	}
 	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")
@@ -215,7 +216,8 @@ func SingleElimination(t []models.Tiktok) models.Bracket {
 				TiktokURL: t[j+1].URL,
 			},
 		})
-		secondRoundParticipators = append(secondRoundParticipators, models.MatchOption{MatchID: matchID})
+		secondRoundParticipators = append(secondRoundParticipators,
+			models.MatchOption{MatchID: matchID})
 	}
 	// Appending first round firstRoundMatches to rounds
 	rounds = append(rounds, models.Round{
@@ -224,7 +226,8 @@ func SingleElimination(t []models.Tiktok) models.Bracket {
 	})
 	// Appending TiktokOptions to second round participators
 	for i := 0; i < countTiktok-countFirstRoundTiktoks; i++ {
-		secondRoundParticipators = append(secondRoundParticipators, models.TiktokOption{TiktokURL: t[countTiktok-1-i].URL})
+		secondRoundParticipators = append(secondRoundParticipators,
+			models.TiktokOption{TiktokURL: t[countTiktok-1-i].URL})
 	}
 	// Generating second round firstRoundMatches
 	for i := 0; i < int(countSecondRoundParticipators); i += 2 {
@@ -247,9 +250,13 @@ func SingleElimination(t []models.Tiktok) models.Bracket {
 		var currentRoundMatches []models.Match
 		for matchID := 0; matchID < len(previousRoundMatches); matchID += 2 {
 			match := models.Match{
-				MatchID:      uuid.NewString(),
-				FirstOption:  models.MatchOption{MatchID: previousRoundMatches[matchID].MatchID},
-				SecondOption: models.MatchOption{MatchID: previousRoundMatches[matchID+1].MatchID},
+				MatchID: uuid.NewString(),
+				FirstOption: models.MatchOption{
+					MatchID: previousRoundMatches[matchID].MatchID,
+				},
+				SecondOption: models.MatchOption{
+					MatchID: previousRoundMatches[matchID+1].MatchID,
+				},
 			}
 			currentRoundMatches = append(currentRoundMatches, match)
 		}
@@ -282,7 +289,10 @@ func SwissSystem(t []models.Tiktok) models.Bracket {
 	return bracket
 }
 
-// KingOfTheHill First match decided randomly between two participators. Loser of match leaves the game, winner will go to next match, next opponent decided randomly from standings. Procedure continues until last standing.
+//	KingOfTheHill
+//	First match decided randomly between two participators.
+//	Loser of match leaves the game, winner will go to next match, next opponent decided randomly from standings.
+//	Procedure continues until last standing.
 func KingOfTheHill(t []models.Tiktok) models.Bracket {
 	var bracket models.Bracket
 	var rounds []models.Round
@@ -311,6 +321,15 @@ func KingOfTheHill(t []models.Tiktok) models.Bracket {
 	return bracket
 }
 
+// GetAllTournaments
+//	@Summary		All tournaments
+//	@Description	Get all tournaments
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Success		200			{array}		models.Tournament	"Contest bracket"
+//	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
+//	@Router			/tournament				[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	tournaments, err := database.GetAllTournaments()
 	if err != nil {

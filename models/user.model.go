@@ -20,11 +20,6 @@ type LoginInput struct {
 	Password string `validate:"required"`
 }
 
-type UserInfo struct {
-	ID       *uuid.UUID
-	Username string
-}
-
 type UserAuthDetails struct {
 	ID       string
 	Username string
