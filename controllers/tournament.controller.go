@@ -6,11 +6,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"math"
+	"math/rand"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
+	"time"
 )
 
-// @Summary		Create new tournament
+// CreateTournament @Summary		Create new tournament
 // @Description	Create new tournament for current user
 // @Tags			tournament
 // @Accept			json
@@ -93,7 +95,7 @@ func CreateTournament(c *fiber.Ctx) error {
 		fmt.Sprintf("Successfully created tournament %s", payload.Name))
 }
 
-// @Summary		Tournament details
+// GetTournamentDetails @Summary		Tournament details
 // @Description	Get tournament details by its id
 // @Tags			tournament
 // @Accept			json
@@ -116,7 +118,7 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tournament)
 }
 
-// @Summary		Tournament tiktoks
+// GetTournamentTiktoks @Summary		Tournament tiktoks
 // @Description	Get tournament tiktoks
 // @Tags			tournament
 // @Accept			json
@@ -139,7 +141,7 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tiktoks)
 }
 
-// @Summary		Tournament contest
+// GetTournamentContest @Summary		Tournament contest
 // @Description	Get tournament contest
 // @Tags			tournament
 // @Accept			json
@@ -181,16 +183,26 @@ func GetTournamentContest(c *fiber.Ctx) error {
 	if payload.ContestType == "single elimination" {
 		return c.Status(fiber.StatusOK).JSON(SingleElimination(tiktoks))
 	}
+	if payload.ContestType == "double elimination" {
+		return c.Status(fiber.StatusOK).JSON(DoubleElimination(tiktoks))
+	}
+	if payload.ContestType == "swiss system" {
+		return c.Status(fiber.StatusOK).JSON(SwissSystem(tiktoks))
+	}
+	if payload.ContestType == "king of the hill" {
+		return c.Status(fiber.StatusOK).JSON(KingOfTheHill(tiktoks))
+	}
 	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")
 }
 
-func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket {
-	countTiktok := len(tiktoks)
+// SingleElimination https://en.wikipedia.org/wiki/Single-elimination_tournament
+func SingleElimination(t []models.Tiktok) models.Bracket {
+	countTiktok := len(t)
 	countRound := math.Ceil(math.Log2(float64(countTiktok)))
 	countSecondRoundParticipators := math.Pow(2, countRound) / 2
 	countFirstRoundTiktoks := (countTiktok - int(math.Pow(2, countRound-1))) * 2
 
-	var bracket models.SingleEliminationBracket
+	var bracket models.Bracket
 	var rounds []models.Round
 
 	var firstRoundMatches []models.Match
@@ -204,10 +216,10 @@ func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket 
 		firstRoundMatches = append(firstRoundMatches, models.Match{
 			MatchID: matchID,
 			FirstOption: models.TiktokOption{
-				TiktokURL: tiktoks[j].URL,
+				TiktokURL: t[j].URL,
 			},
 			SecondOption: models.TiktokOption{
-				TiktokURL: tiktoks[j+1].URL,
+				TiktokURL: t[j+1].URL,
 			},
 		})
 		secondRoundParticipators = append(secondRoundParticipators, models.MatchOption{MatchID: matchID})
@@ -219,7 +231,7 @@ func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket 
 	})
 	// Appending TiktokOptions to second round participators
 	for i := 0; i < countTiktok-countFirstRoundTiktoks; i++ {
-		secondRoundParticipators = append(secondRoundParticipators, models.TiktokOption{TiktokURL: tiktoks[countTiktok-1-i].URL})
+		secondRoundParticipators = append(secondRoundParticipators, models.TiktokOption{TiktokURL: t[countTiktok-1-i].URL})
 	}
 	// Generating second round firstRoundMatches
 	for i := 0; i < int(countSecondRoundParticipators); i += 2 {
@@ -258,10 +270,51 @@ func SingleElimination(tiktoks []models.Tiktok) models.SingleEliminationBracket 
 		previousRoundMatches = currentRoundMatches
 	}
 	// Creating bracket
-	bracket = models.SingleEliminationBracket{
+	bracket = models.Bracket{
 		CountMatches: countTiktok - 1,
 		Rounds:       &rounds,
 	}
+	return bracket
+}
+
+// DoubleElimination https://en.wikipedia.org/wiki/Double-elimination_tournament TODO
+func DoubleElimination(t []models.Tiktok) models.Bracket {
+	var bracket models.Bracket
+	return bracket
+}
+
+// SwissSystem https://en.wikipedia.org/wiki/Swiss-system_tournament TODO
+func SwissSystem(t []models.Tiktok) models.Bracket {
+	var bracket models.Bracket
+	return bracket
+}
+
+// KingOfTheHill First match decided randomly between two participators. Loser of match leaves the game, winner will go to next match, next opponent decided randomly from standings. Procedure continues until last standing.
+func KingOfTheHill(t []models.Tiktok) models.Bracket {
+	var bracket models.Bracket
+	var rounds []models.Round
+	countTiktok := len(t)
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(countTiktok, func(i, j int) { t[i], t[j] = t[j], t[i] })
+	match := models.Match{
+		MatchID:      uuid.NewString(),
+		FirstOption:  models.TiktokOption{TiktokURL: t[0].URL},
+		SecondOption: models.TiktokOption{TiktokURL: t[1].URL},
+	}
+	round := models.Round{Round: 1, Matches: []models.Match{match}}
+	rounds = append(rounds, round)
+	previousMatch := match
+	for i := 2; i < countTiktok-1; i++ {
+		match = models.Match{
+			MatchID:      uuid.NewString(),
+			FirstOption:  models.MatchOption{MatchID: previousMatch.MatchID},
+			SecondOption: models.TiktokOption{TiktokURL: t[i].URL},
+		}
+		round := models.Round{Round: i, Matches: []models.Match{match}}
+		rounds = append(rounds, round)
+		previousMatch = match
+	}
+	bracket = models.Bracket{CountMatches: countTiktok - 1, Rounds: &rounds}
 	return bracket
 }
 

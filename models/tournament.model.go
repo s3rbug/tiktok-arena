@@ -18,7 +18,7 @@ type CreateTournament struct {
 	Tiktoks []CreateTiktok `validate:"required"`
 }
 
-type SingleEliminationBracket struct {
+type Bracket struct {
 	CountMatches int
 	Rounds       *[]Round
 }
@@ -60,6 +60,7 @@ type ContestPayload struct {
 func GetAllowedTournamentType() map[string]bool {
 	return map[string]bool{
 		"single elimination": true,
+		"king of the hill":   true,
 	}
 }
 
