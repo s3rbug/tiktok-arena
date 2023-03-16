@@ -45,11 +45,6 @@ func CreateTournament(c *fiber.Ctx) error {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	if !models.CheckIfAllowedTournamentSize(payload.Size) {
-		return MessageResponse(c, fiber.StatusBadRequest,
-			fmt.Sprintf("%d is incorrect tournament size", payload.Size))
-	}
-
 	if payload.Size != len(payload.Tiktoks) {
 		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Tournament size and count of tiktoks mismatch (%d != %d)",
@@ -174,16 +169,10 @@ func GetTournamentContest(c *fiber.Ctx) error {
 			fmt.Sprintf("Could not get tiktoks for tournament with id %s", tournamentId))
 	}
 
-	if contestType == models.SingleElimination() {
+	if contestType == models.SingleElimination {
 		return c.Status(fiber.StatusOK).JSON(SingleElimination(tiktoks))
 	}
-	if contestType == models.DoubleElimination() {
-		return c.Status(fiber.StatusOK).JSON(DoubleElimination(tiktoks))
-	}
-	if contestType == models.SwissSystem() {
-		return c.Status(fiber.StatusOK).JSON(SwissSystem(tiktoks))
-	}
-	if contestType == models.KingOfTheHill() {
+	if contestType == models.KingOfTheHill {
 		return c.Status(fiber.StatusOK).JSON(KingOfTheHill(tiktoks))
 	}
 	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")
@@ -277,18 +266,6 @@ func SingleElimination(t []models.Tiktok) models.Bracket {
 	return bracket
 }
 
-// DoubleElimination https://en.wikipedia.org/wiki/Double-elimination_tournament TODO
-func DoubleElimination(t []models.Tiktok) models.Bracket {
-	var bracket models.Bracket
-	return bracket
-}
-
-// SwissSystem https://en.wikipedia.org/wiki/Swiss-system_tournament TODO
-func SwissSystem(t []models.Tiktok) models.Bracket {
-	var bracket models.Bracket
-	return bracket
-}
-
 //	KingOfTheHill
 //	First match decided randomly between two participators.
 //	Loser of match leaves the game, winner will go to next match, next opponent decided randomly from standings.
@@ -329,7 +306,7 @@ func KingOfTheHill(t []models.Tiktok) models.Bracket {
 //	@Produce		json
 //	@Success		200			{array}		models.Tournament	"Contest bracket"
 //	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
-//	@Router			/tournament				[get]
+//	@Router			/tournament										[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	tournaments, err := database.GetAllTournaments()
 	if err != nil {

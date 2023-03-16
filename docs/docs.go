@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.LoginInput"
+                            "$ref": "#/definitions/models.AuthInput"
                         }
                     }
                 ],
@@ -75,7 +75,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterInput"
+                            "$ref": "#/definitions/models.AuthInput"
                         }
                     }
                 ],
@@ -337,6 +337,21 @@ const docTemplate = `{
                 }
             }
         },
+        "models.AuthInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "password"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Bracket": {
             "type": "object",
             "properties": {
@@ -366,7 +381,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "name",
-                "size",
                 "tiktoks"
             ],
             "properties": {
@@ -374,28 +388,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "size": {
-                    "type": "integer"
+                    "type": "integer",
+                    "maximum": 64,
+                    "minimum": 4
                 },
                 "tiktoks": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.CreateTiktok"
                     }
-                }
-            }
-        },
-        "models.LoginInput": {
-            "type": "object",
-            "required": [
-                "name",
-                "password"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
                 }
             }
         },
@@ -407,21 +408,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "secondOption": {}
-            }
-        },
-        "models.RegisterInput": {
-            "type": "object",
-            "required": [
-                "name",
-                "password"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
             }
         },
         "models.Round": {

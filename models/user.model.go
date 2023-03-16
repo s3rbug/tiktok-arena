@@ -10,12 +10,7 @@ type User struct {
 	Password string     `gorm:"not null"`
 }
 
-type RegisterInput struct {
-	Name     string `validate:"required"`
-	Password string `validate:"required"`
-}
-
-type LoginInput struct {
+type AuthInput struct {
 	Name     string `validate:"required"`
 	Password string `validate:"required"`
 }

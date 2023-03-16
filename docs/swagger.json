@@ -29,7 +29,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.LoginInput"
+                            "$ref": "#/definitions/models.AuthInput"
                         }
                     }
                 ],
@@ -69,7 +69,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterInput"
+                            "$ref": "#/definitions/models.AuthInput"
                         }
                     }
                 ],
@@ -331,6 +331,21 @@
                 }
             }
         },
+        "models.AuthInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "password"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Bracket": {
             "type": "object",
             "properties": {
@@ -360,7 +375,6 @@
             "type": "object",
             "required": [
                 "name",
-                "size",
                 "tiktoks"
             ],
             "properties": {
@@ -368,28 +382,15 @@
                     "type": "string"
                 },
                 "size": {
-                    "type": "integer"
+                    "type": "integer",
+                    "maximum": 64,
+                    "minimum": 4
                 },
                 "tiktoks": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.CreateTiktok"
                     }
-                }
-            }
-        },
-        "models.LoginInput": {
-            "type": "object",
-            "required": [
-                "name",
-                "password"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
                 }
             }
         },
@@ -401,21 +402,6 @@
                     "type": "string"
                 },
                 "secondOption": {}
-            }
-        },
-        "models.RegisterInput": {
-            "type": "object",
-            "required": [
-                "name",
-                "password"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
             }
         },
         "models.Round": {

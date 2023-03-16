@@ -14,7 +14,7 @@ type Tournament struct {
 
 type CreateTournament struct {
 	Name    string         `validate:"required"`
-	Size    int            `validate:"required"`
+	Size    int            `validate:"gte=4,lte=64"`
 	Tiktoks []CreateTiktok `validate:"required"`
 }
 
@@ -42,41 +42,22 @@ type Match struct {
 	SecondOption interface{}
 }
 
-func SingleElimination() string {
-	return "single_elimination"
+type ContestPayload struct {
+	ContestType string `validate:"required"`
 }
 
-func KingOfTheHill() string {
-	return "king_of_the_hill"
-}
-
-func SwissSystem() string {
-	return "swiss_system"
-}
-
-func DoubleElimination() string {
-	return "double_elimination"
-}
+const (
+	SingleElimination = "single_elimination"
+	KingOfTheHill     = "king_of_the_hill"
+)
 
 func GetAllowedTournamentType() map[string]bool {
 	return map[string]bool{
-		SingleElimination(): true,
-		KingOfTheHill():     true,
+		SingleElimination: true,
+		KingOfTheHill:     true,
 	}
 }
 
 func CheckIfAllowedTournamentType(tournamentType string) bool {
 	return GetAllowedTournamentType()[tournamentType]
-}
-
-func GetAllowedTournamentSize() map[int]bool {
-	return map[int]bool{
-		8:  true,
-		16: true,
-		32: true,
-	}
-}
-
-func CheckIfAllowedTournamentSize(sizeToCheck int) bool {
-	return GetAllowedTournamentSize()[sizeToCheck]
 }

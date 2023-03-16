@@ -5,6 +5,16 @@ definitions:
       message:
         type: string
     type: object
+  models.AuthInput:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - name
+    - password
+    type: object
   models.Bracket:
     properties:
       countMatches:
@@ -26,6 +36,8 @@ definitions:
       name:
         type: string
       size:
+        maximum: 64
+        minimum: 4
         type: integer
       tiktoks:
         items:
@@ -33,18 +45,7 @@ definitions:
         type: array
     required:
     - name
-    - size
     - tiktoks
-    type: object
-  models.LoginInput:
-    properties:
-      name:
-        type: string
-      password:
-        type: string
-    required:
-    - name
-    - password
     type: object
   models.Match:
     properties:
@@ -52,16 +53,6 @@ definitions:
       matchID:
         type: string
       secondOption: {}
-    type: object
-  models.RegisterInput:
-    properties:
-      name:
-        type: string
-      password:
-        type: string
-    required:
-    - name
-    - password
     type: object
   models.Round:
     properties:
@@ -138,7 +129,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/models.LoginInput'
+          $ref: '#/definitions/models.AuthInput'
       produces:
       - application/json
       responses:
@@ -164,7 +155,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/models.RegisterInput'
+          $ref: '#/definitions/models.AuthInput'
       produces:
       - application/json
       responses:

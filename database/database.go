@@ -55,12 +55,6 @@ func CreateNewUser(newUser *models.User) error {
 	return record.Error
 }
 
-func GetTournamentByName(tournamentName string) (models.Tournament, error) {
-	var tournament models.Tournament
-	record := DB.Table("tournaments").First(&tournament, "name = ?", tournamentName)
-	return tournament, record.Error
-}
-
 func GetTournamentById(tournamentId string) (models.Tournament, error) {
 	var tournament models.Tournament
 	record := DB.Table("tournaments").First(&tournament, "id = ?", tournamentId)
@@ -85,7 +79,9 @@ func CreateNewTiktok(newTiktok *models.Tiktok) error {
 
 func GetTournamentTiktoksById(tournamentId string) ([]models.Tiktok, error) {
 	var tiktoks []models.Tiktok
-	record := DB.Table("tiktoks").Select([]string{"ID", "TournamentID", "URL", "Wins", "AvgPoints"}).Find(&tiktoks, "tournament_id = ?", tournamentId)
+	record := DB.Table("tiktoks").
+		Select([]string{"ID", "TournamentID", "URL", "Wins", "AvgPoints"}).
+		Find(&tiktoks, "tournament_id = ?", tournamentId)
 	return tiktoks, record.Error
 }
 

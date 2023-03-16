@@ -17,12 +17,12 @@ import (
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload			body		models.RegisterInput	true	"Data to register user"
+//	@Param			payload			body		models.AuthInput		true	"Data to register user"
 //	@Success		200				{object}	models.UserAuthDetails	"Register success"
 //	@Failure		400				{object}	MessageResponseType		"Failed to register user"
 //	@Router			/auth/register	[post]
 func RegisterUser(c *fiber.Ctx) error {
-	var payload *models.RegisterInput
+	var payload *models.AuthInput
 
 	err := c.BodyParser(&payload)
 	if err != nil {
@@ -78,12 +78,12 @@ func RegisterUser(c *fiber.Ctx) error {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload			body		models.LoginInput		true	"Data to login user"
+//	@Param			payload			body		models.AuthInput		true	"Data to login user"
 //	@Success		200				{object}	models.UserAuthDetails	"Login success"
 //	@Failure		400				{object}	MessageResponseType		"Error logging in"
 //	@Router			/auth/login    	[post]
 func LoginUser(c *fiber.Ctx) error {
-	var payload *models.LoginInput
+	var payload *models.AuthInput
 
 	err := c.BodyParser(&payload)
 	if err != nil {
