@@ -20,7 +20,7 @@ type CreateTournament struct {
 
 type Bracket struct {
 	CountMatches int
-	Rounds       *[]Round
+	Rounds       []Round
 }
 
 type Round struct {
@@ -28,12 +28,24 @@ type Round struct {
 	Matches []Match
 }
 
+type Option interface {
+	isOption() bool
+}
+
 type MatchOption struct {
 	MatchID string
 }
 
+func (m MatchOption) isOption() bool {
+	return true
+}
+
 type TiktokOption struct {
 	TiktokURL string
+}
+
+func (m TiktokOption) isOption() bool {
+	return true
 }
 
 type Match struct {
