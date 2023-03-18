@@ -190,7 +190,7 @@ func shuffleTiktok(t []models.Tiktok) {
 // SingleElimination https://en.wikipedia.org/wiki/Single-elimination_tournament
 func SingleElimination(t []models.Tiktok) models.Bracket {
 	countTiktok := len(t)
-	countRound := int(math.Log2(float64(countTiktok))) + 1
+	countRound := int(math.Ceil(math.Log2(float64(countTiktok))))
 	countSecondRoundParticipators := 1 << (countRound - 1) // Equivalent to int(math.Pow(2, float64(countRound)) / 2)
 	countFirstRoundMatches := countTiktok - int(math.Pow(2, float64(countRound)-1))
 	countFirstRoundTiktoks := countFirstRoundMatches * 2
@@ -318,7 +318,7 @@ func KingOfTheHill(t []models.Tiktok) models.Bracket {
 //	@Produce		json
 //	@Success		200			{array}		models.Tournament	"Contest bracket"
 //	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
-//	@Router			/tournament										[get]
+//	@Router			/tournament																[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	tournaments, err := database.GetAllTournaments()
 	if err != nil {
