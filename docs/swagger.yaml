@@ -24,7 +24,7 @@ definitions:
           $ref: '#/definitions/models.Round'
         type: array
     type: object
-  models.CreateOrEditTournament:
+  models.CreateEditTournament:
     properties:
       name:
         type: string
@@ -90,6 +90,15 @@ definitions:
         $ref: '#/definitions/models.User'
       userID:
         type: string
+    type: object
+  models.TournamentIds:
+    properties:
+      tournamentIds:
+        items:
+          type: string
+        type: array
+    required:
+    - tournamentIds
     type: object
   models.User:
     properties:
@@ -275,7 +284,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/models.CreateOrEditTournament'
+          $ref: '#/definitions/models.CreateEditTournament'
       produces:
       - application/json
       responses:
@@ -290,6 +299,34 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create new tournament
+      tags:
+      - tournament
+  /tournament/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Delete tournaments for current user
+      parameters:
+      - description: Data to delete tournaments
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.TournamentIds'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tournaments deleted
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+        "400":
+          description: Error during tournaments deletion
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete tournaments
       tags:
       - tournament
   /tournament/delete/{tournamentId}:
@@ -324,7 +361,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/models.CreateOrEditTournament'
+          $ref: '#/definitions/models.CreateEditTournament'
       produces:
       - application/json
       responses:
@@ -368,7 +405,7 @@ paths:
       summary: Tournament tiktoks
       tags:
       - tournament
-  /user:
+  /user/tournaments:
     get:
       consumes:
       - application/json
@@ -388,5 +425,5 @@ paths:
       - ApiKeyAuth: []
       summary: Create new tournament
       tags:
-      - tournament
+      - user
 swagger: "2.0"

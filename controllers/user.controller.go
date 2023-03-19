@@ -10,12 +10,12 @@ import (
 //
 //	@Summary		Create new tournament
 //	@Description	Create new tournament for current user
-//	@Tags			tournament
+//	@Tags			user
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200		{object}	MessageResponseType				"Tournaments of user"
-//	@Failure		400		{object}	MessageResponseType				"Couldn't get tournaments for specific user"
+//	@Success		200	{object}	MessageResponseType	"Tournaments of user"
+//	@Failure		400	{object}	MessageResponseType	"Couldn't get tournaments for specific user"
 //	@Router			/user/tournaments [get]
 func TournamentsOfUser(c *fiber.Ctx) error {
 	userId, err := GetUserIdAndCheckJWT(c)

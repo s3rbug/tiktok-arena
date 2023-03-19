@@ -230,7 +230,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateOrEditTournament"
+                            "$ref": "#/definitions/models.CreateEditTournament"
                         }
                     }
                 ],
@@ -243,6 +243,51 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Error during tournament creation",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/tournament/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete tournaments for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Delete tournaments",
+                "parameters": [
+                    {
+                        "description": "Data to delete tournaments",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TournamentIds"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tournaments deleted",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during tournaments deletion",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }
@@ -309,7 +354,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateOrEditTournament"
+                            "$ref": "#/definitions/models.CreateEditTournament"
                         }
                     }
                 ],
@@ -408,7 +453,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user": {
+        "/user/tournaments": {
             "get": {
                 "security": [
                     {
@@ -423,7 +468,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tournament"
+                    "user"
                 ],
                 "summary": "Create new tournament",
                 "responses": {
@@ -481,7 +526,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateOrEditTournament": {
+        "models.CreateEditTournament": {
             "type": "object",
             "required": [
                 "name",
@@ -579,6 +624,20 @@ const docTemplate = `{
                 },
                 "userID": {
                     "type": "string"
+                }
+            }
+        },
+        "models.TournamentIds": {
+            "type": "object",
+            "required": [
+                "tournamentIds"
+            ],
+            "properties": {
+                "tournamentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

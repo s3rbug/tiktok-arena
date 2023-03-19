@@ -20,16 +20,16 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			payload	body		models.CreateOrEditTournament	true	"Data to create tournament"
-//	@Success		200		{object}	MessageResponseType				"Tournament created"
-//	@Failure		400		{object}	MessageResponseType				"Error during tournament creation"
+//	@Param			payload	body		models.CreateEditTournament	true	"Data to create tournament"
+//	@Success		200		{object}	MessageResponseType			"Tournament created"
+//	@Failure		400		{object}	MessageResponseType			"Error during tournament creation"
 //	@Router			/tournament/create [post]
 func CreateTournament(c *fiber.Ctx) error {
 	userId, err := GetUserIdAndCheckJWT(c)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	var payload *models.CreateOrEditTournament
+	var payload *models.CreateEditTournament
 	err = c.BodyParser(&payload)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
@@ -94,14 +94,14 @@ func CreateTournament(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			payload	body		models.CreateOrEditTournament	true	"Data to edit tournament"
-//	@Success		200		{object}	MessageResponseType				"Tournament edited"
-//	@Failure		400		{object}	MessageResponseType				"Error during tournament edition"
+//	@Param			payload	body		models.CreateEditTournament	true	"Data to edit tournament"
+//	@Success		200		{object}	MessageResponseType			"Tournament edited"
+//	@Failure		400		{object}	MessageResponseType			"Error during tournament edition"
 //	@Router			/tournament/edit/{tournamentId} [post]
 func EditTournament(c *fiber.Ctx) error {
 	userId, err := GetUserIdAndCheckJWT(c)
 
-	var payload *models.CreateOrEditTournament
+	var payload *models.CreateEditTournament
 	err = c.BodyParser(&payload)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
@@ -144,7 +144,7 @@ func EditTournament(c *fiber.Ctx) error {
 			fmt.Sprintf("Tournament name:%s is taken by other tournament", payload.Name))
 	}
 	// Get tiktoks to edit
-	oldS, err := database.GetTournamentTiktoksById(tournamentIdString)
+	oldS, err := database.GetTournamentTiktoksById(tournamentId)
 
 	editedTournament := models.Tournament{
 		ID:     &tournamentId,
@@ -193,11 +193,11 @@ func EditTournament(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200		{object}	MessageResponseType				"Tournament deleted"
-//	@Failure		400		{object}	MessageResponseType				"Error during tournament deletion"
+//	@Success		200	{object}	MessageResponseType	"Tournament deleted"
+//	@Failure		400	{object}	MessageResponseType	"Error during tournament deletion"
 //	@Router			/tournament/delete/{tournamentId} [delete]
 func DeleteTournament(c *fiber.Ctx) error {
-	_, err := GetUserIdAndCheckJWT(c)
+	userId, err := GetUserIdAndCheckJWT(c)
 
 	tournamentIdString := c.Params("tournamentId")
 
@@ -219,14 +219,14 @@ func DeleteTournament(c *fiber.Ctx) error {
 	}
 
 	// Get tiktoks to delete
-	tiktoksToDelete, err := database.GetTournamentTiktoksById(tournamentIdString)
+	tiktoksToDelete, err := database.GetTournamentTiktoksById(tournamentId)
 
 	err = database.DeleteTiktoks(tiktoksToDelete)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	err = database.DeleteTournamentById(tournamentId)
+	err = database.DeleteTournamentById(tournamentId, userId)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
@@ -270,6 +270,69 @@ func GetUserIdAndCheckJWT(c *fiber.Ctx) (uuid.UUID, error) {
 	return userId, err
 }
 
+// DeleteTournaments
+//
+//	@Summary		Delete tournaments
+//	@Description	Delete tournaments for current user
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			payload	body		models.TournamentIds	true	"Data to delete tournaments"
+//	@Success		200		{object}	MessageResponseType		"Tournaments deleted"
+//	@Failure		400		{object}	MessageResponseType		"Error during tournaments deletion"
+//	@Router			/tournament/delete [delete]
+func DeleteTournaments(c *fiber.Ctx) error {
+	userId, err := GetUserIdAndCheckJWT(c)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	var payload *models.TournamentIds
+	err = c.BodyParser(&payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = models.ValidateStruct(payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	ids := payload.TournamentIds
+	b, err := database.CheckIfTournamentsExistsByIds(ids, userId)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	if !b {
+		return MessageResponse(c, fiber.StatusBadRequest, fmt.Sprintf("One or more tournaments doesn't exist"))
+	}
+	err = database.DeleteTiktoksByIds(ids)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	err = database.DeleteTournamentsByIds(ids, userId)
+
+	return MessageResponse(c, fiber.StatusOK,
+		fmt.Sprintf("Successfully deleted tournaments"))
+}
+
+// GetAllTournaments
+//
+//	@Summary		All tournaments
+//	@Description	Get all tournaments
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Success		200			{array}		models.Tournament	"Contest bracket"
+//	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
+//	@Router			/tournament																																								[get]
+func GetAllTournaments(c *fiber.Ctx) error {
+	tournaments, err := database.GetAllTournaments()
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
+	}
+	return c.Status(fiber.StatusOK).JSON(tournaments)
+}
+
 // GetTournamentDetails
 //
 //	@Summary		Tournament details
@@ -289,8 +352,7 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 	}
 	tournament, err := database.GetTournamentById(tournamentId)
 	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest,
-			fmt.Sprintf("Could not get tournament with id %s", tournamentId))
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 	return c.Status(fiber.StatusOK).JSON(tournament)
 }
@@ -307,10 +369,14 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 //	@Failure		400				{object}	MessageResponseType	"Tournament not found"
 //	@Router			/tournament/tiktoks/{tournamentId} [get]
 func GetTournamentTiktoks(c *fiber.Ctx) error {
-	tournamentId := c.Params("tournamentId")
-	if tournamentId == "" {
+	tournamentIdString := c.Params("tournamentId")
+	if tournamentIdString == "" {
 		return MessageResponse(c, fiber.StatusBadRequest,
-			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
+			fmt.Sprintf("%s is not a valid tournament id", tournamentIdString))
+	}
+	tournamentId, err := uuid.Parse(tournamentIdString)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 	tiktoks, err := database.GetTournamentTiktoksById(tournamentId)
 	if err != nil {
@@ -333,10 +399,10 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 //	@Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
 //	@Router			/tournament/contest/{tournamentId} [get]
 func GetTournamentContest(c *fiber.Ctx) error {
-	tournamentId := c.Params("tournamentId")
-	if tournamentId == "" {
+	tournamentIdString := c.Params("tournamentId")
+	if tournamentIdString == "" {
 		return MessageResponse(c, fiber.StatusBadRequest,
-			fmt.Sprintf("%s is not a valid tournament id", tournamentId))
+			fmt.Sprintf("%s is not a valid tournament id", tournamentIdString))
 	}
 
 	contestType := c.Query("type")
@@ -345,6 +411,11 @@ func GetTournamentContest(c *fiber.Ctx) error {
 			fmt.Sprintf("%s is not allowed tournament format", contestType),
 		)
 	}
+	tournamentId, err := uuid.Parse(tournamentIdString)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
 	tiktoks, err := database.GetTournamentTiktoksById(tournamentId)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest,
@@ -485,22 +556,4 @@ func KingOfTheHill(t []models.Tiktok) models.Bracket {
 		CountMatches: countTiktok - 1,
 		Rounds:       rounds,
 	}
-}
-
-// GetAllTournaments
-//
-//	@Summary		All tournaments
-//	@Description	Get all tournaments
-//	@Tags			tournament
-//	@Accept			json
-//	@Produce		json
-//	@Success		200			{array}		models.Tournament	"Contest bracket"
-//	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
-//	@Router			/tournament																						[get]
-func GetAllTournaments(c *fiber.Ctx) error {
-	tournaments, err := database.GetAllTournaments()
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
-	}
-	return c.Status(fiber.StatusOK).JSON(tournaments)
 }

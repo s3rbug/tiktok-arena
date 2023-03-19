@@ -80,6 +80,15 @@ func CheckIfTournamentExistsById(id uuid.UUID) bool {
 	return tournament.ID != nil
 }
 
+func CheckIfTournamentsExistsByIds(ids []string, userId uuid.UUID) (bool, error) {
+	var tournaments []models.Tournament
+	record := DB.Table("tournaments").Where("user_id = ? AND id IN ?", userId, ids).Find(&tournaments)
+	if len(tournaments) != len(ids) {
+		return false, record.Error
+	}
+	return true, record.Error
+}
+
 func CreateNewTournament(newTournament *models.Tournament) error {
 	record := DB.Table("tournaments").Create(&newTournament)
 	return record.Error
@@ -91,8 +100,20 @@ func EditTournament(t *models.Tournament) error {
 	return record.Error
 }
 
-func DeleteTournamentById(id uuid.UUID) error {
-	record := DB.Table("tournaments").Where("id = ?", id).Delete(&models.Tournament{})
+func DeleteTournamentById(id uuid.UUID, userId uuid.UUID) error {
+	record := DB.Table("tournaments").Where("id = ? AND user_id", id, userId).Delete(&models.Tournament{})
+	return record.Error
+}
+
+func DeleteTournamentsByIds(ids []string, userId uuid.UUID) error {
+	record := DB.Table("tournaments").
+		Where("user_id = ? AND id IN (?)", userId, ids).
+		Delete(&models.Tournament{})
+	return record.Error
+}
+
+func DeleteTiktoksByIds(ids []string) error {
+	record := DB.Table("tiktoks").Where("tournament_id IN (?)", ids).Delete(&models.Tiktok{})
 	return record.Error
 }
 
@@ -111,7 +132,7 @@ func DeleteTiktoks(t []models.Tiktok) error {
 	return record.Error
 }
 
-func GetTournamentTiktoksById(tournamentId string) ([]models.Tiktok, error) {
+func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	var tiktoks []models.Tiktok
 	record := DB.Table("tiktoks").
 		Select([]string{"TournamentID", "URL", "Wins", "AvgPoints"}).
@@ -127,7 +148,7 @@ func GetAllTournaments() ([]models.Tournament, error) {
 
 func GetAllTournamentsForUserById(id uuid.UUID) ([]models.Tournament, error) {
 	var tournaments []models.Tournament
-	record := DB.Table("tournaments").Select("*").Where("user_id = ?", id.String()).
+	record := DB.Table("tournaments").Select("*").Where("user_id = ?", id).
 		Limit(100).Find(&tournaments)
 	return tournaments, record.Error
 }
