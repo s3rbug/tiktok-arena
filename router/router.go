@@ -29,4 +29,8 @@ func SetupRoutes(app *fiber.App) {
 		router.Get("/tiktoks/:tournamentId", controllers.GetTournamentTiktoks)
 		router.Get("/:tournamentId", controllers.GetTournamentDetails)
 	})
+
+	api.Route("/user", func(router fiber.Router) {
+		router.Get("/tournaments", middleware.Protected(), controllers.TournamentsOfUser)
+	})
 }

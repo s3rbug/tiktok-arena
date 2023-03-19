@@ -280,7 +280,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully created tournament tournament_name
+          description: Tournament created
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
         "400":
@@ -301,7 +301,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully deleted tournament tournament_id
+          description: Tournament deleted
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
         "400":
@@ -329,7 +329,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully edited tournament tournament_name
+          description: Tournament edited
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
         "400":
@@ -366,6 +366,27 @@ paths:
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
       summary: Tournament tiktoks
+      tags:
+      - tournament
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Create new tournament for current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tournaments of user
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+        "400":
+          description: Couldn't get tournaments for specific user
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+      security:
+      - ApiKeyAuth: []
+      summary: Create new tournament
       tags:
       - tournament
 swagger: "2.0"

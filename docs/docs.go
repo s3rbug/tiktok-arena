@@ -236,7 +236,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully created tournament tournament_name",
+                        "description": "Tournament created",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }
@@ -270,7 +270,7 @@ const docTemplate = `{
                 "summary": "Delete tournament",
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted tournament tournament_id",
+                        "description": "Tournament deleted",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }
@@ -315,7 +315,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully edited tournament tournament_name",
+                        "description": "Tournament edited",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }
@@ -401,6 +401,40 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Tournament not found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create new tournament for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Create new tournament",
+                "responses": {
+                    "200": {
+                        "description": "Tournaments of user",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Couldn't get tournaments for specific user",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }

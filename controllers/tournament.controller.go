@@ -21,7 +21,7 @@ import (
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Param			payload	body		models.CreateOrEditTournament	true	"Data to create tournament"
-//	@Success		200		{object}	MessageResponseType				"Successfully created tournament tournament_name"
+//	@Success		200		{object}	MessageResponseType				"Tournament created"
 //	@Failure		400		{object}	MessageResponseType				"Error during tournament creation"
 //	@Router			/tournament/create [post]
 func CreateTournament(c *fiber.Ctx) error {
@@ -95,7 +95,7 @@ func CreateTournament(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Param			payload	body		models.CreateOrEditTournament	true	"Data to edit tournament"
-//	@Success		200		{object}	MessageResponseType				"Successfully edited tournament tournament_name"
+//	@Success		200		{object}	MessageResponseType				"Tournament edited"
 //	@Failure		400		{object}	MessageResponseType				"Error during tournament edition"
 //	@Router			/tournament/edit/{tournamentId} [post]
 func EditTournament(c *fiber.Ctx) error {
@@ -193,7 +193,7 @@ func EditTournament(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200		{object}	MessageResponseType				"Successfully deleted tournament tournament_id"
+//	@Success		200		{object}	MessageResponseType				"Tournament deleted"
 //	@Failure		400		{object}	MessageResponseType				"Error during tournament deletion"
 //	@Router			/tournament/delete/{tournamentId} [delete]
 func DeleteTournament(c *fiber.Ctx) error {

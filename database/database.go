@@ -124,3 +124,10 @@ func GetAllTournaments() ([]models.Tournament, error) {
 	record := DB.Table("tournaments").Select("*").Limit(100).Find(&tournaments)
 	return tournaments, record.Error
 }
+
+func GetAllTournamentsForUserById(id uuid.UUID) ([]models.Tournament, error) {
+	var tournaments []models.Tournament
+	record := DB.Table("tournaments").Select("*").Where("user_id = ?", id.String()).
+		Limit(100).Find(&tournaments)
+	return tournaments, record.Error
+}
