@@ -3,10 +3,9 @@ package models
 import "github.com/google/uuid"
 
 type Tiktok struct {
-	ID           *uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	TournamentID *uuid.UUID  `gorm:"not null"`
+	TournamentID *uuid.UUID  `gorm:"not null;primaryKey"`
 	Tournament   *Tournament `gorm:"foreignKey:TournamentID"`
-	URL          string      `gorm:"not null"`
+	URL          string      `gorm:"not null;primaryKey"`
 	Wins         int
 	AvgPoints    float64
 	TimesPlayed  int

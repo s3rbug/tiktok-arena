@@ -159,90 +159,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Create new tournament for current user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tournament"
-                ],
-                "summary": "Create new tournament",
-                "parameters": [
-                    {
-                        "description": "Data to create tournament",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.CreateTournament"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tournament created",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
-                        }
-                    },
-                    "400": {
-                        "description": "Error during tournament creation",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
-                        }
-                    }
-                }
             }
         },
-        "/tournament/{tournamentId}": {
-            "get": {
-                "description": "Get tournament details by its id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tournament"
-                ],
-                "summary": "Tournament details",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tournament id",
-                        "name": "tournamentId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tournament",
-                        "schema": {
-                            "$ref": "#/definitions/models.Tournament"
-                        }
-                    },
-                    "400": {
-                        "description": "Tournament not found",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
-                        }
-                    }
-                }
-            }
-        },
-        "/tournament/{tournamentId}/contest": {
+        "/tournament/contest/{tournamentId}": {
             "get": {
                 "description": "Get tournament contest",
                 "consumes": [
@@ -286,7 +205,131 @@ const docTemplate = `{
                 }
             }
         },
-        "/tournament/{tournamentId}/tiktoks": {
+        "/tournament/create": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create new tournament for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Create new tournament",
+                "parameters": [
+                    {
+                        "description": "Data to create tournament",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateOrEditTournament"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully created tournament tournament_name",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during tournament creation",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/tournament/delete/{tournamentId}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete tournament for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Delete tournament",
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted tournament tournament_id",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during tournament deletion",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/tournament/edit/{tournamentId}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Edit tournament for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Edit tournament",
+                "parameters": [
+                    {
+                        "description": "Data to edit tournament",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateOrEditTournament"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully edited tournament tournament_name",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during tournament edition",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/tournament/tiktoks/{tournamentId}": {
             "get": {
                 "description": "Get tournament tiktoks",
                 "consumes": [
@@ -316,6 +359,44 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/models.Tiktok"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Tournament not found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
+        "/tournament/{tournamentId}": {
+            "get": {
+                "description": "Get tournament details by its id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Tournament details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tournament id",
+                        "name": "tournamentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tournament",
+                        "schema": {
+                            "$ref": "#/definitions/models.Tournament"
                         }
                     },
                     "400": {
@@ -366,18 +447,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateTiktok": {
-            "type": "object",
-            "required": [
-                "url"
-            ],
-            "properties": {
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.CreateTournament": {
+        "models.CreateOrEditTournament": {
             "type": "object",
             "required": [
                 "name",
@@ -397,6 +467,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.CreateTiktok"
                     }
+                }
+            }
+        },
+        "models.CreateTiktok": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string"
                 }
             }
         },
@@ -429,9 +510,6 @@ const docTemplate = `{
             "properties": {
                 "avgPoints": {
                     "type": "number"
-                },
-                "id": {
-                    "type": "string"
                 },
                 "timesPlayed": {
                     "type": "integer"

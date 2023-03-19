@@ -20,22 +20,16 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			payload	body		models.CreateTournament	true	"Data to create tournament"
-//	@Success		200		{object}	MessageResponseType		"Tournament created"
-//	@Failure		400		{object}	MessageResponseType		"Error during tournament creation"
-//	@Router			/tournament [post]
+//	@Param			payload	body		models.CreateOrEditTournament	true	"Data to create tournament"
+//	@Success		200		{object}	MessageResponseType				"Successfully created tournament tournament_name"
+//	@Failure		400		{object}	MessageResponseType				"Error during tournament creation"
+//	@Router			/tournament/create [post]
 func CreateTournament(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-
-	userId, err := uuid.Parse(claims["sub"].(string))
-
+	userId, err := GetUserIdAndCheckJWT(c)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-
-	var payload *models.CreateTournament
-
+	var payload *models.CreateOrEditTournament
 	err = c.BodyParser(&payload)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
@@ -54,7 +48,7 @@ func CreateTournament(c *fiber.Ctx) error {
 		)
 	}
 
-	if database.CheckIfTournamentExists(payload.Name) {
+	if database.CheckIfTournamentExistsByName(payload.Name) {
 		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("Tournament %s already exists", payload.Name))
 	}
@@ -92,6 +86,190 @@ func CreateTournament(c *fiber.Ctx) error {
 		fmt.Sprintf("Successfully created tournament %s", payload.Name))
 }
 
+// EditTournament
+//
+//	@Summary		Edit tournament
+//	@Description	Edit tournament for current user
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			payload	body		models.CreateOrEditTournament	true	"Data to edit tournament"
+//	@Success		200		{object}	MessageResponseType				"Successfully edited tournament tournament_name"
+//	@Failure		400		{object}	MessageResponseType				"Error during tournament edition"
+//	@Router			/tournament/edit/{tournamentId} [post]
+func EditTournament(c *fiber.Ctx) error {
+	userId, err := GetUserIdAndCheckJWT(c)
+
+	var payload *models.CreateOrEditTournament
+	err = c.BodyParser(&payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = models.ValidateStruct(payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	if payload.Size != len(payload.Tiktoks) {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Tournament size and count of tiktoks mismatch (%d != %d)",
+				payload.Size,
+				len(payload.Tiktoks)),
+		)
+	}
+
+	tournamentIdString := c.Params("tournamentId")
+
+	if tournamentIdString == "" {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("%s is not a valid tournament id", tournamentIdString))
+	}
+
+	tournamentId, err := uuid.Parse(tournamentIdString)
+
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Could not parse id %s", tournamentIdString))
+	}
+
+	if !database.CheckIfTournamentExistsById(tournamentId) {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Tournament with id:%s doesn't exist", tournamentIdString))
+	}
+
+	if database.CheckIfNameIsTakenByOtherTournament(payload.Name, tournamentId) {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Tournament name:%s is taken by other tournament", payload.Name))
+	}
+	// Get tiktoks to edit
+	oldS, err := database.GetTournamentTiktoksById(tournamentIdString)
+
+	editedTournament := models.Tournament{
+		ID:     &tournamentId,
+		Name:   payload.Name,
+		UserID: &userId,
+		Size:   payload.Size,
+	}
+
+	err = database.EditTournament(&editedTournament)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	var newS []models.Tiktok
+	for _, value := range payload.Tiktoks {
+		tiktok := models.Tiktok{
+			TournamentID: &tournamentId,
+			URL:          value.URL,
+			Wins:         0,
+			AvgPoints:    0,
+		}
+		if containsTiktok(oldS, tiktok) {
+			err = database.EditTiktok(&tiktok)
+			if err != nil {
+				return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+			}
+		}
+		newS = append(newS, tiktok)
+	}
+	tiktoksToDelete := findDifferenceOfTwoTiktokSlices(oldS, newS)
+
+	err = database.DeleteTiktoks(tiktoksToDelete)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return MessageResponse(c, fiber.StatusOK,
+		fmt.Sprintf("Successfully edited tournament %s", payload.Name))
+}
+
+// DeleteTournament
+//
+//	@Summary		Delete tournament
+//	@Description	Delete tournament for current user
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Success		200		{object}	MessageResponseType				"Successfully deleted tournament tournament_id"
+//	@Failure		400		{object}	MessageResponseType				"Error during tournament deletion"
+//	@Router			/tournament/delete/{tournamentId} [delete]
+func DeleteTournament(c *fiber.Ctx) error {
+	_, err := GetUserIdAndCheckJWT(c)
+
+	tournamentIdString := c.Params("tournamentId")
+
+	if tournamentIdString == "" {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("%s is not a valid tournament id", tournamentIdString))
+	}
+
+	tournamentId, err := uuid.Parse(tournamentIdString)
+
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Could not parse id %s", tournamentIdString))
+	}
+
+	if !database.CheckIfTournamentExistsById(tournamentId) {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Tournament with id:%s doesn't exist", tournamentIdString))
+	}
+
+	// Get tiktoks to delete
+	tiktoksToDelete, err := database.GetTournamentTiktoksById(tournamentIdString)
+
+	err = database.DeleteTiktoks(tiktoksToDelete)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = database.DeleteTournamentById(tournamentId)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return MessageResponse(c, fiber.StatusOK,
+		fmt.Sprintf("Successfully deleted tournament %s", tournamentIdString))
+}
+
+func findDifferenceOfTwoTiktokSlices(s1 []models.Tiktok, s2 []models.Tiktok) []models.Tiktok {
+	var dif []models.Tiktok
+	for _, t1 := range s1 {
+		existsInS2 := false
+		for _, t2 := range s2 {
+			if t1.TournamentID.String() == t2.TournamentID.String() && t1.URL == t2.URL {
+				existsInS2 = true
+				break
+			}
+		}
+		if !existsInS2 {
+			dif = append(dif, t1)
+		}
+	}
+	return dif
+}
+
+func containsTiktok(slice []models.Tiktok, t models.Tiktok) bool {
+	for _, item := range slice {
+		if item.TournamentID == t.TournamentID && item.URL == t.URL {
+			return true
+		}
+	}
+	return false
+}
+
+func GetUserIdAndCheckJWT(c *fiber.Ctx) (uuid.UUID, error) {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+
+	userId, err := uuid.Parse(claims["sub"].(string))
+
+	return userId, err
+}
+
 // GetTournamentDetails
 //
 //	@Summary		Tournament details
@@ -127,7 +305,7 @@ func GetTournamentDetails(c *fiber.Ctx) error {
 //	@Param			tournamentId	path		string				true	"Tournament id"
 //	@Success		200				{array}		models.Tiktok		"Tournament tiktoks"
 //	@Failure		400				{object}	MessageResponseType	"Tournament not found"
-//	@Router			/tournament/{tournamentId}/tiktoks [get]
+//	@Router			/tournament/tiktoks/{tournamentId} [get]
 func GetTournamentTiktoks(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -153,7 +331,7 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 //	@Param			payload			query		models.ContestPayload	true	"Contest type"
 //	@Success		200				{object}	models.Bracket			"Contest bracket"
 //	@Failure		400				{object}	MessageResponseType		"Failed to return tournament contest"
-//	@Router			/tournament/{tournamentId}/contest [get]
+//	@Router			/tournament/contest/{tournamentId} [get]
 func GetTournamentContest(c *fiber.Ctx) error {
 	tournamentId := c.Params("tournamentId")
 	if tournamentId == "" {
@@ -243,7 +421,7 @@ func SingleElimination(t []models.Tiktok) models.Bracket {
 	rounds = append(rounds, secondRound)
 
 	previousRoundMatches := secondRoundMatches
-	for roundID := 3; roundID <= int(countRound); roundID++ {
+	for roundID := 3; roundID <= countRound; roundID++ {
 		// Generating Nth round matches (where N > 2)
 		var currentRoundMatches []models.Match
 		for matchID := 0; matchID < len(previousRoundMatches); matchID += 2 {
@@ -318,7 +496,7 @@ func KingOfTheHill(t []models.Tiktok) models.Bracket {
 //	@Produce		json
 //	@Success		200			{array}		models.Tournament	"Contest bracket"
 //	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
-//	@Router			/tournament																[get]
+//	@Router			/tournament																						[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	tournaments, err := database.GetAllTournaments()
 	if err != nil {

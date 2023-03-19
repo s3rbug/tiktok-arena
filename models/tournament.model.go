@@ -12,7 +12,8 @@ type Tournament struct {
 	User   *User      `gorm:"foreignKey:UserID"`
 }
 
-type CreateTournament struct {
+// CreateOrEditTournament TO DISCUSS TODO
+type CreateOrEditTournament struct {
 	Name    string         `validate:"required"`
 	Size    int            `validate:"gte=4,lte=64"`
 	Tiktoks []CreateTiktok `validate:"required"`
