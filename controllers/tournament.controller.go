@@ -342,6 +342,9 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Router			/tournament																																																						[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	p := new(models.PaginationQueries)
+	if err := c.QueryParser(p); err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, "Failed to parse queries")
+	}
 	models.ValidatePaginationQueries(p)
 	tournamentResponse, err := database.GetTournaments(*p)
 	if err != nil {
