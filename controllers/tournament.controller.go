@@ -176,16 +176,20 @@ func EditTournament(c *fiber.Ctx) error {
 	}
 	tiktoksToDelete := findDifferenceOfTwoTiktokSlices(oldS, newS)
 
-	err = database.DeleteTiktoks(tiktoksToDelete)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	if len(tiktoksToDelete) != 0 {
+		err = database.DeleteTiktoks(tiktoksToDelete)
+		if err != nil {
+			return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+		}
 	}
 
 	tiktoksToCreate := findDifferenceOfTwoTiktokSlices(newS, oldS)
 
-	err = database.CreateNewTiktoks(tiktoksToCreate)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	if len(tiktoksToCreate) != 0 {
+		err = database.CreateNewTiktoks(tiktoksToCreate)
+		if err != nil {
+			return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+		}
 	}
 
 	return MessageResponse(c, fiber.StatusOK,
