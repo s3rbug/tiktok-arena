@@ -145,10 +145,37 @@ func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	return tiktoks, record.Error
 }
 
-func GetAllTournaments() ([]models.Tournament, error) {
+func GetTournaments(page int, pageSize int, sortName string, sortSize string) ([]models.Tournament, error) {
 	var tournaments []models.Tournament
-	record := DB.Table("tournaments").Select("*").Limit(100).Find(&tournaments)
+
+	record := DB.Table("tournaments").
+		Scopes(Sort(sortName, sortSize)).
+		Scopes(Paginate(page, pageSize)).
+		Find(&tournaments)
 	return tournaments, record.Error
+}
+
+func Sort(sortName string, sortSize string) func(db *gorm.DB) *gorm.DB {
+	var sortString string
+	if sortName != "" && sortSize == "" {
+		sortString = fmt.Sprintf("name %s", sortName)
+	}
+	if sortName == "" && sortSize != "" {
+		sortString = fmt.Sprintf("size %s", sortSize)
+	}
+	if sortName != "" && sortSize != "" {
+		sortString = fmt.Sprintf("name %s, size %s", sortName, sortSize)
+	}
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order(sortString)
+	}
+}
+
+func Paginate(page int, pageSize int) func(db *gorm.DB) *gorm.DB {
+	offset := (page - 1) * pageSize
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(offset).Limit(pageSize)
+	}
 }
 
 func GetAllTournamentsForUserById(id uuid.UUID) ([]models.Tournament, error) {

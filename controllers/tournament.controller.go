@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"math"
 	"math/rand"
+	"strconv"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
 	"time"
@@ -337,10 +338,48 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
 //	@Router			/tournament																																								[get]
 func GetAllTournaments(c *fiber.Ctx) error {
-	tournaments, err := database.GetAllTournaments()
+	page, _ := strconv.Atoi(c.Query("page"))
+	if page <= 0 {
+		page = 1
+	}
+
+	pageSize, _ := strconv.Atoi(c.Query("count"))
+	switch {
+	case pageSize > 50:
+		pageSize = 50
+	case pageSize <= 0:
+		pageSize = 20
+	}
+
+	sortName := c.Query("sort_name")
+	switch sortName {
+	case "asc":
+		sortName = "asc"
+	case "desc":
+		sortName = "desc"
+	default:
+		sortName = ""
+	}
+
+	sortSize := c.Query("sort_size")
+	switch sortSize {
+	case "asc":
+		sortSize = "asc"
+	case "desc":
+		sortSize = "desc"
+	default:
+		sortSize = ""
+	}
+
+	tournaments, err := database.GetTournaments(page, pageSize, sortName, sortSize)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}
+
+	if len(tournaments) == 0 {
+		return MessageResponse(c, fiber.StatusMovedPermanently, "There is no page")
+	}
+
 	return c.Status(fiber.StatusOK).JSON(tournaments)
 }
 
@@ -447,7 +486,8 @@ func shuffleTiktok(t []models.Tiktok) {
 	rand.Shuffle(len(t), func(i, j int) { t[i], t[j] = t[j], t[i] })
 }
 
-// SingleElimination https://en.wikipedia.org/wiki/Single-elimination_tournament
+// SingleElimination
+// https://en.wikipedia.org/wiki/Single-elimination_tournament
 func SingleElimination(t []models.Tiktok) models.Bracket {
 	countTiktok := len(t)
 	countRound := int(math.Ceil(math.Log2(float64(countTiktok))))
