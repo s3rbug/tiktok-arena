@@ -100,6 +100,17 @@ definitions:
     required:
     - tournamentIds
     type: object
+  models.TournamentsResponse:
+    properties:
+      tournamentCount:
+        type: integer
+      tournaments:
+        items:
+          $ref: '#/definitions/models.Tournament'
+        type: array
+    required:
+    - tournaments
+    type: object
   models.User:
     properties:
       id:
@@ -203,6 +214,23 @@ paths:
       consumes:
       - application/json
       description: Get all tournaments
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: string
+      - description: page size
+        in: query
+        name: count
+        type: string
+      - description: sort page by name
+        in: query
+        name: sort_name
+        type: string
+      - description: sort page by size
+        in: query
+        name: sort_size
+        type: string
       produces:
       - application/json
       responses:
@@ -210,7 +238,7 @@ paths:
           description: Contest bracket
           schema:
             items:
-              $ref: '#/definitions/models.Tournament'
+              $ref: '#/definitions/models.TournamentsResponse'
             type: array
         "400":
           description: Failed to return tournament contest

@@ -12,6 +12,11 @@ type Tournament struct {
 	User   *User      `gorm:"foreignKey:UserID"`
 }
 
+type TournamentsResponse struct {
+	TournamentCount int64
+	Tournaments     []Tournament `validate:"required"`
+}
+
 type TournamentIds struct {
 	TournamentIds []string `validate:"required"`
 }

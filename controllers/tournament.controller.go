@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"math"
 	"math/rand"
-	"strconv"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
 	"time"
@@ -334,53 +333,26 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Tags			tournament
 //	@Accept			json
 //	@Produce		json
-//	@Success		200			{array}		models.Tournament	"Contest bracket"
-//	@Failure		400			{object}	MessageResponseType	"Failed to return tournament contest"
-//	@Router			/tournament																																								[get]
+//	@Param			page		query		string						false	"page number"
+//	@Param			count		query		string						false	"page size"
+//	@Param			sort_name	query		string						false	"sort page by name"
+//	@Param			sort_size	query		string						false	"sort page by size"
+//	@Success		200			{array}		models.TournamentsResponse	"Contest bracket"
+//	@Failure		400			{object}	MessageResponseType			"Failed to return tournament contest"
+//	@Router			/tournament																																																						[get]
 func GetAllTournaments(c *fiber.Ctx) error {
-	page, _ := strconv.Atoi(c.Query("page"))
-	if page <= 0 {
-		page = 1
-	}
-
-	pageSize, _ := strconv.Atoi(c.Query("count"))
-	switch {
-	case pageSize > 50:
-		pageSize = 50
-	case pageSize <= 0:
-		pageSize = 20
-	}
-
-	sortName := c.Query("sort_name")
-	switch sortName {
-	case "asc":
-		sortName = "asc"
-	case "desc":
-		sortName = "desc"
-	default:
-		sortName = ""
-	}
-
-	sortSize := c.Query("sort_size")
-	switch sortSize {
-	case "asc":
-		sortSize = "asc"
-	case "desc":
-		sortSize = "desc"
-	default:
-		sortSize = ""
-	}
-
-	tournaments, err := database.GetTournaments(page, pageSize, sortName, sortSize)
+	p := new(models.PaginationQueries)
+	models.ValidatePaginationQueries(p)
+	tournamentResponse, err := database.GetTournaments(*p)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}
 
-	if len(tournaments) == 0 {
+	if tournamentResponse.TournamentCount == 0 {
 		return MessageResponse(c, fiber.StatusMovedPermanently, "There is no page")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(tournaments)
+	return c.Status(fiber.StatusOK).JSON(tournamentResponse)
 }
 
 // GetTournamentDetails

@@ -145,14 +145,15 @@ func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	return tiktoks, record.Error
 }
 
-func GetTournaments(page int, pageSize int, sortName string, sortSize string) ([]models.Tournament, error) {
+func GetTournaments(queries models.PaginationQueries) (models.TournamentsResponse, error) {
 	var tournaments []models.Tournament
-
+	var totalTournaments int64
+	DB.Table("tournaments").Count(&totalTournaments)
 	record := DB.Table("tournaments").
-		Scopes(Sort(sortName, sortSize)).
-		Scopes(Paginate(page, pageSize)).
+		Scopes(Sort(queries.SortName, queries.SortSize)).
+		Scopes(Paginate(queries.Page, queries.Count)).
 		Find(&tournaments)
-	return tournaments, record.Error
+	return models.TournamentsResponse{TournamentCount: totalTournaments, Tournaments: tournaments}, record.Error
 }
 
 func Sort(sortName string, sortSize string) func(db *gorm.DB) *gorm.DB {

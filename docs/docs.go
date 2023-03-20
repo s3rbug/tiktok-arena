@@ -142,13 +142,39 @@ const docTemplate = `{
                     "tournament"
                 ],
                 "summary": "All tournaments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "page size",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort page by name",
+                        "name": "sort_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort page by size",
+                        "name": "sort_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Contest bracket",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Tournament"
+                                "$ref": "#/definitions/models.TournamentsResponse"
                             }
                         }
                     },
@@ -637,6 +663,23 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                }
+            }
+        },
+        "models.TournamentsResponse": {
+            "type": "object",
+            "required": [
+                "tournaments"
+            ],
+            "properties": {
+                "tournamentCount": {
+                    "type": "integer"
+                },
+                "tournaments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tournament"
                     }
                 }
             }
