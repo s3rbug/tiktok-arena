@@ -132,6 +132,11 @@ func DeleteTiktoks(t []models.Tiktok) error {
 	return record.Error
 }
 
+func CreateNewTiktoks(t []models.Tiktok) error {
+	record := DB.Table("tiktoks").Create(t)
+	return record.Error
+}
+
 func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	var tiktoks []models.Tiktok
 	record := DB.Table("tiktoks").

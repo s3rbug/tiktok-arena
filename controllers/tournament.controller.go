@@ -181,6 +181,13 @@ func EditTournament(c *fiber.Ctx) error {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	tiktoksToCreate := findDifferenceOfTwoTiktokSlices(newS, oldS)
+
+	err = database.CreateNewTiktoks(tiktoksToCreate)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
 	return MessageResponse(c, fiber.StatusOK,
 		fmt.Sprintf("Successfully edited tournament %s", payload.Name))
 }
