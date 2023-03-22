@@ -29,6 +29,7 @@ func SetupRoutes(app *fiber.App) {
 		router.Delete("/delete", middleware.Protected(), controllers.DeleteTournaments)
 		router.Get("/tiktoks/:tournamentId", controllers.GetTournamentTiktoks)
 		router.Get("/:tournamentId", controllers.GetTournamentDetails)
+		router.Post("/:tournamentId", controllers.TournamentWinner)
 	})
 
 	api.Route("/user", func(router fiber.Router) {

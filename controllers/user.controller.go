@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
 )
@@ -28,4 +30,19 @@ func TournamentsOfUser(c *fiber.Ctx) error {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}
 	return c.Status(fiber.StatusOK).JSON(tournamentsOfUser)
+}
+
+func GetUserIdAndCheckJWT(c *fiber.Ctx) (uuid.UUID, error) {
+	user := c.Locals("user")
+
+	if user == nil {
+		return uuid.UUID{}, MessageResponse(c, fiber.StatusBadRequest, "Empty jwt.token")
+	}
+	userJWT := user.(*jwt.Token)
+
+	claims := userJWT.Claims.(jwt.MapClaims)
+
+	userId, err := uuid.Parse(claims["sub"].(string))
+
+	return userId, err
 }

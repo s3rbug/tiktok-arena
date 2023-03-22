@@ -185,3 +185,14 @@ func GetAllTournamentsForUserById(id uuid.UUID) ([]models.Tournament, error) {
 		Limit(100).Find(&tournaments)
 	return tournaments, record.Error
 }
+
+func RegisterTiktokWinner(tournamentId uuid.UUID, tiktokURL string) error {
+	record := DB.Table("tiktoks").Where("tournament_id = ? AND url = ?", tournamentId, tiktokURL).
+		UpdateColumn("wins", gorm.Expr("wins + ?", 1))
+	if record.Error != nil {
+		return record.Error
+	}
+	record = DB.Table("tournaments").Where("id = ?", tournamentId).
+		UpdateColumn("times_played", gorm.Expr("times_played + ?", 1))
+	return record.Error
+}

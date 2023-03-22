@@ -7,8 +7,6 @@ type Tiktok struct {
 	Tournament   *Tournament `gorm:"foreignKey:TournamentID"`
 	URL          string      `gorm:"not null;primaryKey"`
 	Wins         int
-	AvgPoints    float64
-	TimesPlayed  int
 }
 
 type CreateTiktok struct {

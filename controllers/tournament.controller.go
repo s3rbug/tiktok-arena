@@ -3,13 +3,10 @@ package controllers
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"math"
-	"math/rand"
 	"tiktok-arena/database"
 	"tiktok-arena/models"
-	"time"
 )
 
 // CreateTournament
@@ -20,7 +17,7 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			payload	body		models.CreateEditTournament	true	"Data to create tournament"
+//	@Param			payload	body		models.CreateTournament	true	"Data to create tournament"
 //	@Success		200		{object}	MessageResponseType			"Tournament created"
 //	@Failure		400		{object}	MessageResponseType			"Error during tournament creation"
 //	@Router			/tournament/create [post]
@@ -29,7 +26,7 @@ func CreateTournament(c *fiber.Ctx) error {
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	var payload *models.CreateEditTournament
+	var payload *models.CreateTournament
 	err = c.BodyParser(&payload)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
@@ -74,7 +71,6 @@ func CreateTournament(c *fiber.Ctx) error {
 			TournamentID: &newTournamentId,
 			URL:          value.URL,
 			Wins:         0,
-			AvgPoints:    0,
 		}
 		err = database.CreateNewTiktok(&tiktok)
 		if err != nil {
@@ -94,14 +90,14 @@ func CreateTournament(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			payload	body		models.CreateEditTournament	true	"Data to edit tournament"
+//	@Param			payload	body		models.EditTournament	true	"Data to edit tournament"
 //	@Success		200		{object}	MessageResponseType			"Tournament edited"
 //	@Failure		400		{object}	MessageResponseType			"Error during tournament edition"
 //	@Router			/tournament/edit/{tournamentId} [post]
 func EditTournament(c *fiber.Ctx) error {
 	userId, err := GetUserIdAndCheckJWT(c)
 
-	var payload *models.CreateEditTournament
+	var payload *models.EditTournament
 	err = c.BodyParser(&payload)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
@@ -164,7 +160,6 @@ func EditTournament(c *fiber.Ctx) error {
 			TournamentID: &tournamentId,
 			URL:          value.URL,
 			Wins:         0,
-			AvgPoints:    0,
 		}
 		if containsTiktok(oldS, tiktok) {
 			err = database.EditTiktok(&tiktok)
@@ -244,41 +239,6 @@ func DeleteTournament(c *fiber.Ctx) error {
 
 	return MessageResponse(c, fiber.StatusOK,
 		fmt.Sprintf("Successfully deleted tournament %s", tournamentIdString))
-}
-
-func findDifferenceOfTwoTiktokSlices(s1 []models.Tiktok, s2 []models.Tiktok) []models.Tiktok {
-	var dif []models.Tiktok
-	for _, t1 := range s1 {
-		existsInS2 := false
-		for _, t2 := range s2 {
-			if t1.TournamentID.String() == t2.TournamentID.String() && t1.URL == t2.URL {
-				existsInS2 = true
-				break
-			}
-		}
-		if !existsInS2 {
-			dif = append(dif, t1)
-		}
-	}
-	return dif
-}
-
-func containsTiktok(slice []models.Tiktok, t models.Tiktok) bool {
-	for _, item := range slice {
-		if item.TournamentID == t.TournamentID && item.URL == t.URL {
-			return true
-		}
-	}
-	return false
-}
-
-func GetUserIdAndCheckJWT(c *fiber.Ctx) (uuid.UUID, error) {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-
-	userId, err := uuid.Parse(claims["sub"].(string))
-
-	return userId, err
 }
 
 // DeleteTournaments
@@ -411,6 +371,55 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tiktoks)
 }
 
+// TournamentWinner
+//
+//	@Summary		Update tournament winner statistics
+//	@Description	Increment wins and increment times_played
+//	@Tags			tournament
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			payload	body		models.CreateTournament	true	"Data to update tournament winner"
+//	@Success		200		{object}	MessageResponseType			"Winner updated"
+//	@Failure		400		{object}	MessageResponseType			"Error during winner updating"
+//	@Router			/tournament/:tournamentId [post]
+func TournamentWinner(c *fiber.Ctx) error {
+	_, err := GetUserIdAndCheckJWT(c)
+
+	tournamentIdString := c.Params("tournamentId")
+
+	if tournamentIdString == "" {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("%s is not a valid tournament id", tournamentIdString))
+	}
+
+	tournamentId, err := uuid.Parse(tournamentIdString)
+
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest,
+			fmt.Sprintf("Could not parse id %s", tournamentIdString))
+	}
+
+	var payload *models.TournamentWinner
+	err = c.BodyParser(&payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = models.ValidateStruct(payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = database.RegisterTiktokWinner(tournamentId, payload.TiktokURL)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return MessageResponse(c, fiber.StatusOK,
+		fmt.Sprintf("Successfully registered winner for tournament %s", tournamentId))
+}
+
 // GetTournamentContest
 //
 //	@Summary		Tournament contest
@@ -454,11 +463,6 @@ func GetTournamentContest(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(KingOfTheHill(tiktoks))
 	}
 	return MessageResponse(c, fiber.StatusBadRequest, "Unknown error")
-}
-
-func shuffleTiktok(t []models.Tiktok) {
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(t), func(i, j int) { t[i], t[j] = t[j], t[i] })
 }
 
 // SingleElimination

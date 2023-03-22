@@ -5,24 +5,34 @@ import (
 )
 
 type Tournament struct {
-	ID     *uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	Name   string     `gorm:"not null"`
-	Size   int        `gorm:"not null"`
-	UserID *uuid.UUID `gorm:"not null"`
-	User   *User      `gorm:"foreignKey:UserID"`
+	ID          *uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
+	Name        string     `gorm:"not null"`
+	Size        int        `gorm:"not null"`
+	TimesPlayed int        `gorm:"not null"`
+	UserID      *uuid.UUID `gorm:"not null"`
+	User        *User      `gorm:"foreignKey:UserID"`
 }
 
 type TournamentsResponse struct {
-	TournamentCount int64
+	TournamentCount int64        `validate:"required"`
 	Tournaments     []Tournament `validate:"required"`
+}
+
+type TournamentWinner struct {
+	TiktokURL string `validate:"required"`
 }
 
 type TournamentIds struct {
 	TournamentIds []string `validate:"required"`
 }
 
-// CreateEditTournament TO DISCUSS TODO
-type CreateEditTournament struct {
+type CreateTournament struct {
+	Name    string         `validate:"required"`
+	Size    int            `validate:"gte=4,lte=64"`
+	Tiktoks []CreateTiktok `validate:"required"`
+}
+
+type EditTournament struct {
 	Name    string         `validate:"required"`
 	Size    int            `validate:"gte=4,lte=64"`
 	Tiktoks []CreateTiktok `validate:"required"`
