@@ -187,6 +187,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/tournament/:tournamentId": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Increment wins and increment times_played",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Update tournament winner statistics",
+                "parameters": [
+                    {
+                        "description": "Data to update tournament winner",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTournament"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Winner updated",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during winner updating",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
+            }
+        },
         "/tournament/contest/{tournamentId}": {
             "get": {
                 "description": "Get tournament contest",
@@ -256,7 +301,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateEditTournament"
+                            "$ref": "#/definitions/models.CreateTournament"
                         }
                     }
                 ],
@@ -380,7 +425,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateEditTournament"
+                            "$ref": "#/definitions/models.EditTournament"
                         }
                     }
                 ],
@@ -552,7 +597,18 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateEditTournament": {
+        "models.CreateTiktok": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateTournament": {
             "type": "object",
             "required": [
                 "name",
@@ -575,14 +631,26 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateTiktok": {
+        "models.EditTournament": {
             "type": "object",
             "required": [
-                "url"
+                "name",
+                "tiktoks"
             ],
             "properties": {
-                "url": {
+                "name": {
                     "type": "string"
+                },
+                "size": {
+                    "type": "integer",
+                    "maximum": 64,
+                    "minimum": 4
+                },
+                "tiktoks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CreateTiktok"
+                    }
                 }
             }
         },
@@ -613,12 +681,6 @@ const docTemplate = `{
         "models.Tiktok": {
             "type": "object",
             "properties": {
-                "avgPoints": {
-                    "type": "number"
-                },
-                "timesPlayed": {
-                    "type": "integer"
-                },
                 "tournament": {
                     "$ref": "#/definitions/models.Tournament"
                 },
@@ -643,6 +705,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "size": {
+                    "type": "integer"
+                },
+                "timesPlayed": {
                     "type": "integer"
                 },
                 "user": {
@@ -670,6 +735,7 @@ const docTemplate = `{
         "models.TournamentsResponse": {
             "type": "object",
             "required": [
+                "tournamentCount",
                 "tournaments"
             ],
             "properties": {
