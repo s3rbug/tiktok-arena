@@ -6,7 +6,7 @@ import (
 
 type Tournament struct {
 	ID          *uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	Name        string     `gorm:"not null"`
+	Name        string     `gorm:"not null;default:null"`
 	Size        int        `gorm:"not null"`
 	TimesPlayed int        `gorm:"not null"`
 	UserID      *uuid.UUID `gorm:"not null"`

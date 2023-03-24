@@ -69,6 +69,7 @@ func CreateTournament(c *fiber.Ctx) error {
 	for _, value := range payload.Tiktoks {
 		tiktok := models.Tiktok{
 			TournamentID: &newTournamentId,
+			Name:         value.Name,
 			URL:          value.URL,
 			Wins:         0,
 		}
@@ -158,6 +159,7 @@ func EditTournament(c *fiber.Ctx) error {
 	for _, value := range payload.Tiktoks {
 		tiktok := models.Tiktok{
 			TournamentID: &tournamentId,
+			Name:         value.Name,
 			URL:          value.URL,
 			Wins:         0,
 		}
@@ -301,12 +303,22 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Failure		400			{object}	MessageResponseType			"Failed to return tournament contest"
 //	@Router			/tournament																																																														[get]
 func GetAllTournaments(c *fiber.Ctx) error {
+	var payload *models.SearchBody
+	err := c.BodyParser(&payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	err = models.ValidateStruct(payload)
+	if err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
+	}
 	p := new(models.PaginationQueries)
 	if err := c.QueryParser(p); err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to parse queries")
 	}
 	models.ValidatePaginationQueries(p)
-	tournamentResponse, err := database.GetTournaments(*p)
+	tournamentResponse, err := database.GetTournaments(*p, payload.SearchText)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}
@@ -382,7 +394,7 @@ func GetTournamentTiktoks(c *fiber.Ctx) error {
 //	@Param			payload	body		models.CreateTournament	true	"Data to update tournament winner"
 //	@Success		200		{object}	MessageResponseType		"Winner updated"
 //	@Failure		400		{object}	MessageResponseType		"Error during winner updating"
-//	@Router			/tournament/:tournamentId [post]
+//	@Router			/tournament/{tournamentId} [post]
 func TournamentWinner(c *fiber.Ctx) error {
 	_, err := GetUserIdAndCheckJWT(c)
 

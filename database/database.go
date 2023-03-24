@@ -27,6 +27,8 @@ func ConnectDB(config *configuration.EnvConfigModel) {
 	}
 	//	Extension for postgresql uuid support
 	DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+	//  Extension for search
+	DB.Exec("CREATE EXTENSION IF NOT EXISTS \"fuzzystrmatch\"")
 
 	err = DB.AutoMigrate(
 		&models.User{},
@@ -101,7 +103,7 @@ func EditTournament(t *models.Tournament) error {
 }
 
 func DeleteTournamentById(id uuid.UUID, userId uuid.UUID) error {
-	record := DB.Table("tournaments").Where("id = ? AND user_id", id, userId).Delete(&models.Tournament{})
+	record := DB.Table("tournaments").Where("id = ? AND user_id = ?", id, userId).Delete(&models.Tournament{})
 	return record.Error
 }
 
@@ -140,20 +142,27 @@ func CreateNewTiktoks(t []models.Tiktok) error {
 func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	var tiktoks []models.Tiktok
 	record := DB.Table("tiktoks").
-		Select([]string{"TournamentID", "URL", "Wins", "AvgPoints"}).
+		Select("*").
 		Find(&tiktoks, "tournament_id = ?", tournamentId)
 	return tiktoks, record.Error
 }
 
-func GetTournaments(queries models.PaginationQueries) (models.TournamentsResponse, error) {
+func GetTournaments(queries models.PaginationQueries, searchText string) (models.TournamentsResponse, error) {
 	var tournaments []models.Tournament
 	var totalTournaments int64
 	DB.Table("tournaments").Count(&totalTournaments)
 	record := DB.Table("tournaments").
+		Scopes(Search(searchText)).
 		Scopes(Sort(queries.SortName, queries.SortSize)).
 		Scopes(Paginate(queries.Page, queries.Count)).
 		Find(&tournaments)
 	return models.TournamentsResponse{TournamentCount: totalTournaments, Tournaments: tournaments}, record.Error
+}
+
+func Search(searchText string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Select("*, levenshtein(name, ?) as distance", searchText).Order("distance")
+	}
 }
 
 func Sort(sortName string, sortSize string) func(db *gorm.DB) *gorm.DB {

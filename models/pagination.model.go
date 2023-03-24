@@ -7,6 +7,10 @@ type PaginationQueries struct {
 	SortSize string `query:"sort_size"`
 }
 
+type SearchBody struct {
+	SearchText string
+}
+
 func ValidatePaginationQueries(queries *PaginationQueries) {
 	if queries.Page <= 0 {
 		queries.Page = 1
