@@ -295,13 +295,14 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Tags			tournament
 //	@Accept			json
 //	@Produce		json
-//	@Param			page		query		string						false	"page number"
-//	@Param			count		query		string						false	"page size"
-//	@Param			sort_name	query		string						false	"sort page by name"
-//	@Param			sort_size	query		string						false	"sort page by size"
-//	@Success		200			{array}		models.TournamentsResponse	"Contest bracket"
-//	@Failure		400			{object}	MessageResponseType			"Failed to return tournament contest"
-//	@Router			/tournament																																																														[get]
+//	@Param			page				query		string						false	"page number"
+//	@Param			count				query		string						false	"page size"
+//	@Param			sort_name			query		string						false	"sort page by name"
+//	@Param			sort_size			query		string						false	"sort page by size"
+//	@Param			search				query		string						false	"search"
+//	@Success		200					{array}		models.TournamentsResponse	"Contest bracket"
+//	@Failure		400					{object}	MessageResponseType			"Failed to return tournament contest"
+//	@Router			/tournament [get]																																																																												[get]
 func GetAllTournaments(c *fiber.Ctx) error {
 	p := new(models.PaginationQueries)
 	if err := c.QueryParser(p); err != nil {

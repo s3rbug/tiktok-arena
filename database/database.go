@@ -191,11 +191,17 @@ func Paginate(page int, pageSize int) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func GetAllTournamentsForUserById(id uuid.UUID) ([]models.Tournament, error) {
+func GetAllTournamentsForUserById(id uuid.UUID, queries models.PaginationQueries) (models.TournamentsResponse, error) {
 	var tournaments []models.Tournament
-	record := DB.Table("tournaments").Select("*").Where("user_id = ?", id).
+	var totalTournaments int64
+	DB.Table("tournaments").Where("user_id = ?", id).Count(&totalTournaments)
+	record := DB.Table("tournaments").
+		Scopes(Search(queries.SearchText)).
+		Where("user_id = ?", id).
+		Scopes(Sort(queries.SortName, queries.SortSize)).
+		Scopes(Paginate(queries.Page, queries.Count)).
 		Limit(100).Find(&tournaments)
-	return tournaments, record.Error
+	return models.TournamentsResponse{TournamentCount: totalTournaments, Tournaments: tournaments}, record.Error
 }
 
 func RegisterTiktokWinner(tournamentId uuid.UUID, tiktokURL string) error {

@@ -26,9 +26,12 @@ definitions:
     type: object
   models.CreateTiktok:
     properties:
+      name:
+        type: string
       url:
         type: string
     required:
+    - name
     - url
     type: object
   models.CreateTournament:
@@ -81,6 +84,8 @@ definitions:
     type: object
   models.Tiktok:
     properties:
+      name:
+        type: string
       tournament:
         $ref: '#/definitions/models.Tournament'
       tournamentID:
@@ -246,6 +251,10 @@ paths:
         in: query
         name: sort_size
         type: string
+      - description: search
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -260,34 +269,6 @@ paths:
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
       summary: All tournaments
-      tags:
-      - tournament
-  /tournament/:tournamentId:
-    post:
-      consumes:
-      - application/json
-      description: Increment wins and increment times_played
-      parameters:
-      - description: Data to update tournament winner
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/models.CreateTournament'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Winner updated
-          schema:
-            $ref: '#/definitions/controllers.MessageResponseType'
-        "400":
-          description: Error during winner updating
-          schema:
-            $ref: '#/definitions/controllers.MessageResponseType'
-      security:
-      - ApiKeyAuth: []
-      summary: Update tournament winner statistics
       tags:
       - tournament
   /tournament/{tournamentId}:
@@ -313,6 +294,33 @@ paths:
           schema:
             $ref: '#/definitions/controllers.MessageResponseType'
       summary: Tournament details
+      tags:
+      - tournament
+    post:
+      consumes:
+      - application/json
+      description: Increment wins and increment times_played
+      parameters:
+      - description: Data to update tournament winner
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTournament'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Winner updated
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+        "400":
+          description: Error during winner updating
+          schema:
+            $ref: '#/definitions/controllers.MessageResponseType'
+      security:
+      - ApiKeyAuth: []
+      summary: Update tournament winner statistics
       tags:
       - tournament
   /tournament/contest/{tournamentId}:
@@ -481,13 +489,34 @@ paths:
       consumes:
       - application/json
       description: Create new tournament for current user
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: string
+      - description: page size
+        in: query
+        name: count
+        type: string
+      - description: sort page by name
+        in: query
+        name: sort_name
+        type: string
+      - description: sort page by size
+        in: query
+        name: sort_size
+        type: string
+      - description: search
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: Tournaments of user
           schema:
-            $ref: '#/definitions/controllers.MessageResponseType'
+            $ref: '#/definitions/models.TournamentsResponse'
         "400":
           description: Couldn't get tournaments for specific user
           schema:

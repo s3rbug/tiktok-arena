@@ -166,6 +166,12 @@ const docTemplate = `{
                         "description": "sort page by size",
                         "name": "sort_size",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -180,51 +186,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Failed to return tournament contest",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
-                        }
-                    }
-                }
-            }
-        },
-        "/tournament/:tournamentId": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Increment wins and increment times_played",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tournament"
-                ],
-                "summary": "Update tournament winner statistics",
-                "parameters": [
-                    {
-                        "description": "Data to update tournament winner",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.CreateTournament"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Winner updated",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
-                        }
-                    },
-                    "400": {
-                        "description": "Error during winner updating",
                         "schema": {
                             "$ref": "#/definitions/controllers.MessageResponseType"
                         }
@@ -522,6 +483,49 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Increment wins and increment times_played",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tournament"
+                ],
+                "summary": "Update tournament winner statistics",
+                "parameters": [
+                    {
+                        "description": "Data to update tournament winner",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateTournament"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Winner updated",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    },
+                    "400": {
+                        "description": "Error during winner updating",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.MessageResponseType"
+                        }
+                    }
+                }
             }
         },
         "/user/tournaments": {
@@ -542,11 +546,43 @@ const docTemplate = `{
                     "user"
                 ],
                 "summary": "Create new tournament",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "page size",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort page by name",
+                        "name": "sort_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort page by size",
+                        "name": "sort_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Tournaments of user",
                         "schema": {
-                            "$ref": "#/definitions/controllers.MessageResponseType"
+                            "$ref": "#/definitions/models.TournamentsResponse"
                         }
                     },
                     "400": {
@@ -600,9 +636,13 @@ const docTemplate = `{
         "models.CreateTiktok": {
             "type": "object",
             "required": [
+                "name",
                 "url"
             ],
             "properties": {
+                "name": {
+                    "type": "string"
+                },
                 "url": {
                     "type": "string"
                 }
@@ -681,6 +721,9 @@ const docTemplate = `{
         "models.Tiktok": {
             "type": "object",
             "properties": {
+                "name": {
+                    "type": "string"
+                },
                 "tournament": {
                     "$ref": "#/definitions/models.Tournament"
                 },

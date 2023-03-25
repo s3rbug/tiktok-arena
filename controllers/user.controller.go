@@ -16,20 +16,34 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200	{object}	MessageResponseType	"Tournaments of user"
-//	@Failure		400	{object}	MessageResponseType	"Couldn't get tournaments for specific user"
+//	@Param			page		query		string						false	"page number"
+//	@Param			count		query		string						false	"page size"
+//	@Param			sort_name	query		string						false	"sort page by name"
+//	@Param			sort_size	query		string						false	"sort page by size"
+//	@Param			search		query		string						false	"search"
+//	@Success		200			{object}	models.TournamentsResponse	"Tournaments of user"
+//	@Failure		400			{object}	MessageResponseType			"Couldn't get tournaments for specific user"
 //	@Router			/user/tournaments [get]
 func TournamentsOfUser(c *fiber.Ctx) error {
 	userId, err := GetUserIdAndCheckJWT(c)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	var tournamentsOfUser []models.Tournament
-	tournamentsOfUser, err = database.GetAllTournamentsForUserById(userId)
+	p := new(models.PaginationQueries)
+	if err := c.QueryParser(p); err != nil {
+		return MessageResponse(c, fiber.StatusBadRequest, "Failed to parse queries")
+	}
+	models.ValidatePaginationQueries(p)
+	tournamentResponse, err := database.GetAllTournamentsForUserById(userId, *p)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}
-	return c.Status(fiber.StatusOK).JSON(tournamentsOfUser)
+
+	if tournamentResponse.TournamentCount == 0 {
+		return MessageResponse(c, fiber.StatusMovedPermanently, "There is no page")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(tournamentResponse)
 }
 
 func GetUserIdAndCheckJWT(c *fiber.Ctx) (uuid.UUID, error) {
