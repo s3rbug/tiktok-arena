@@ -147,12 +147,12 @@ func GetTournamentTiktoksById(tournamentId uuid.UUID) ([]models.Tiktok, error) {
 	return tiktoks, record.Error
 }
 
-func GetTournaments(queries models.PaginationQueries, searchText string) (models.TournamentsResponse, error) {
+func GetTournaments(queries models.PaginationQueries) (models.TournamentsResponse, error) {
 	var tournaments []models.Tournament
 	var totalTournaments int64
 	DB.Table("tournaments").Count(&totalTournaments)
 	record := DB.Table("tournaments").
-		Scopes(Search(searchText)).
+		Scopes(Search(queries.SearchText)).
 		Scopes(Sort(queries.SortName, queries.SortSize)).
 		Scopes(Paginate(queries.Page, queries.Count)).
 		Find(&tournaments)
@@ -161,6 +161,9 @@ func GetTournaments(queries models.PaginationQueries, searchText string) (models
 
 func Search(searchText string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
+		if searchText == "" {
+			return db
+		}
 		return db.Select("*, levenshtein(name, ?) as distance", searchText).Order("distance")
 	}
 }

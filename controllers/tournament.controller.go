@@ -303,22 +303,12 @@ func DeleteTournaments(c *fiber.Ctx) error {
 //	@Failure		400			{object}	MessageResponseType			"Failed to return tournament contest"
 //	@Router			/tournament																																																														[get]
 func GetAllTournaments(c *fiber.Ctx) error {
-	var payload *models.SearchBody
-	err := c.BodyParser(&payload)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
-	}
-
-	err = models.ValidateStruct(payload)
-	if err != nil {
-		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
-	}
 	p := new(models.PaginationQueries)
 	if err := c.QueryParser(p); err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to parse queries")
 	}
 	models.ValidatePaginationQueries(p)
-	tournamentResponse, err := database.GetTournaments(*p, payload.SearchText)
+	tournamentResponse, err := database.GetTournaments(*p)
 	if err != nil {
 		return MessageResponse(c, fiber.StatusBadRequest, "Failed to get tournaments")
 	}

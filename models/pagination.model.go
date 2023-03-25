@@ -1,14 +1,11 @@
 package models
 
 type PaginationQueries struct {
-	Page     int    `query:"page"`
-	Count    int    `query:"count"`
-	SortName string `query:"sort_name"`
-	SortSize string `query:"sort_size"`
-}
-
-type SearchBody struct {
-	SearchText string
+	Page       int    `query:"page"`
+	Count      int    `query:"count"`
+	SortName   string `query:"sort_name"`
+	SortSize   string `query:"sort_size"`
+	SearchText string `query:"search"`
 }
 
 func ValidatePaginationQueries(queries *PaginationQueries) {
