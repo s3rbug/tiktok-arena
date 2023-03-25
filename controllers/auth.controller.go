@@ -12,6 +12,7 @@ import (
 )
 
 // RegisterUser
+//
 //	@Summary		Register user
 //	@Description	Register new user with given credentials
 //	@Tags			auth
@@ -40,7 +41,7 @@ func RegisterUser(c *fiber.Ctx) error {
 		return MessageResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	if database.CheckIfUserExists(payload.Name) {
+	if database.UserExists(payload.Name) {
 		return MessageResponse(c, fiber.StatusBadRequest,
 			fmt.Sprintf("User %s already exists", payload.Name))
 	}
@@ -73,6 +74,7 @@ func RegisterUser(c *fiber.Ctx) error {
 }
 
 // LoginUser
+//
 //	@Summary		Login user
 //	@Description	Login user with given credentials
 //	@Tags			auth
@@ -142,6 +144,7 @@ func UserJwtToken(user *models.User) (string, error) {
 }
 
 // WhoAmI
+//
 //	@Summary		Authenticated user details
 //	@Description	Get current user id and name
 //	@Tags			auth
@@ -157,6 +160,10 @@ func WhoAmI(c *fiber.Ctx) error {
 
 	username := claims["name"].(string)
 	id := claims["sub"].(string)
+
+	if !database.UserExists(username) {
+		return MessageResponse(c, fiber.StatusUnauthorized, "There is no user")
+	}
 
 	return c.Status(fiber.StatusOK).JSON(models.UserAuthDetails{
 		ID:       id,

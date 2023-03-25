@@ -47,7 +47,7 @@ func GetUserByName(username string) (models.User, error) {
 	return user, record.Error
 }
 
-func CheckIfUserExists(username string) bool {
+func UserExists(username string) bool {
 	var user models.User
 	DB.Table("users").Select("id").First(&user, "name = ?", username)
 	return user.ID != nil
